@@ -13,25 +13,59 @@ let rotation = 0;
 let rotationSpeed = 0.005;
 let colorChange = 10;
 let dotSize = 6;
-let numSpirals = 5;  // Default number of spirals
+let numSpirals = 9;  // Default number of spirals
 
 let time = 0;                 // Variable to drive the oscillation
 let frequency = 0;            // Initial frequency of oscillation
 let oscillationRange = 100;   // Maximum oscillation value (positive and negative)
 let minDotSize = 1;  // Minimum dot size when radius is 0
-let maxDotSize = 25; // Maximum dot size when radius is maxRadius
+let maxDotSize = 28; // Maximum dot size when radius is maxRadius
 let phase=0
 
-let doDisplayControls = true
+const colorModes = ["default", "offsetAngle", "offsetAndRadius", "radiusBased", "centerColor"];
+let colorModeIndex = 3;  // global variable to track the current color mode
+colorMethod = colorModes[colorModeIndex];  // Initial setting
+
+let doDisplayControls = true // Whether or not the control display is visible
 
 const maxRadius = Math.sqrt(centerX * centerX + centerY * centerY);
 const angleIncrement = 0.03;
 const radiusIncrement = 1;
 // Parameters for the sigmoid-like growth of the dot size
-let r0 = 49.35;  // Adjust this for the inflection point of the curve
-let k = 0.01;    // Adjust this to make the transition smoother
+let r0 = 84.35;  // Adjust this for the inflection point of the curve
+let k = 0.034;    // Adjust this to make the transition smoother
 
-function drawDotForSpiral(radius, spiralNumber) {
+function colorCalculator(angle, radius) {
+    const angleOffset = Math.PI / 4;  // Adjust as needed
+    
+    switch (colorMethod) {
+        case "offsetAngle":
+            const hue = (angle + angleOffset) * (colorChange + oscillationRange * Math.sin(phase + angle * frequency)) % 360;
+            return `hsl(${hue}, 100%, 50%)`;
+        
+        case "radiusBased":
+            const hueBasedOnRadius = ( (radius / maxRadius) * 360 + (phase * 500)) % 360;  // This will change hue based on the distance from the center
+            return `hsl(${hueBasedOnRadius}, 100%, 50%)`;
+
+        case "offsetAndRadius":
+            let h = (angle + angleOffset) * (colorChange + oscillationRange * Math.sin(phase + angle * frequency)) % 360;
+            h = h + ( (radius / maxRadius) * 360 + (phase * 500)) % 360;
+            h = h % 360
+            return `hsl(${h}, 100%, 50%)`;
+
+        case "centerColor":
+            if (radius < 10) {  // This checks if the dot is very close to the center
+                return "blue";  // Set to your desired center color
+            }
+            // If not at the center, fall back to the default calculation:
+            
+        default:  // This is the default method you provided
+            const hueDefault = angle * (colorChange + oscillationRange * Math.sin(phase + angle * frequency)) % 360;
+            return `hsl(${hueDefault}, 100%, 50%)`;
+    }
+}
+
+function drawDotForSpiral(radius, spiralNumber, colorCallback) {
     const offset = 2 * Math.PI / numSpirals * spiralNumber;
     
     const angle = radius * angleIncrement % (2 * Math.PI);
@@ -41,33 +75,12 @@ function drawDotForSpiral(radius, spiralNumber) {
     const dynamicDotSize = minDotSize + (maxDotSize - minDotSize) / (1 + Math.exp(-k * (radius - r0)));
     const currentColorChange = oscillationRange * Math.sin(phase + angle * frequency);
     
+    const color = colorCallback(angle, radius);
+
     ctx.beginPath();
-    ctx.fillStyle = `hsl(${angle * (colorChange + currentColorChange) % 360}, 100%, 50%)`;
+    ctx.fillStyle = color;
     ctx.arc(x, y, dynamicDotSize, 0, Math.PI * 2);
     ctx.fill();
-}
-
-function drawSpiral(offsetAngle) {
-    let angle = 0;
-    let radius = 0;
-    
-    while (radius < maxRadius) {
-        const x = radius * Math.cos(angle + offsetAngle);  
-        const y = radius * Math.sin(angle + offsetAngle);
-        
-        // Calculate dot size using the sigmoid-like function
-        const dynamicDotSize = minDotSize + (maxDotSize - minDotSize) / (1 + Math.exp(-k * (radius - r0)));
-        
-        const currentColorChange = oscillationRange * Math.sin(phase + angle * frequency);
-        
-        ctx.beginPath();
-        ctx.fillStyle = `hsl(${angle * (colorChange + currentColorChange) % 360}, 100%, 50%)`;
-        ctx.arc(x, y, dynamicDotSize, 0, Math.PI * 2);
-        ctx.fill();
-
-        angle += angleIncrement;
-        radius += radiusIncrement;
-    }
 }
 
 function animate() {
@@ -78,14 +91,13 @@ function animate() {
 
     for (let radius = maxRadius; radius >= 0; radius -= radiusIncrement) {
         for (let i = 0; i < numSpirals; i++) {
-            drawDotForSpiral(radius, i);
+            drawDotForSpiral(radius, i, colorCalculator);
         }
     }
 
     ctx.restore();
     rotation += rotationSpeed;
     phase += 0.001;
-
     time += 0.01;  // Increment the time variable for the oscillation
     
     if( doDisplayControls ) {
@@ -141,6 +153,11 @@ document.addEventListener('keydown', function(event) {
         case ' ':
             doDisplayControls = !doDisplayControls 
             break;
+        case 'c':
+            // Increment the index, and wrap it if it exceeds the length of colorModes
+            colorModeIndex = (colorModeIndex + 1) % colorModes.length;
+            colorMethod = colorModes[colorModeIndex];
+            break;
         default:
             const numKey = key;
             if (numKey >= '1' && numKey <= '9') {
@@ -192,6 +209,7 @@ function displayControls() {
     ctx.fillText(`r0: ${r0.toFixed(2)}`, 10, 90);
     ctx.fillText(`k: ${k.toFixed(4)}`, 10, 110);
     ctx.fillText(`frequency: ${frequency.toFixed(4)}`, 10, 130);
+    ctx.fillText(`colorMethod: ${colorMethod}`, 10, 150)
 }
 
 
