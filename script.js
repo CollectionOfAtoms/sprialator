@@ -23,7 +23,7 @@ let maxDotSize = 28; // Maximum dot size when radius is maxRadius
 let phase=0
 
 const colorModes = ["default", "offsetAngle", "offsetAndRadius", "radiusBased", "centerColor"];
-let colorModeIndex = 3;  // global variable to track the current color mode
+let colorModeIndex = 2;  // global variable to track the current color mode
 colorMethod = colorModes[colorModeIndex];  // Initial setting
 
 let doDisplayControls = true // Whether or not the control display is visible
@@ -182,6 +182,7 @@ function displayControls() {
         "NumpadAdd: Increase rotation speed",
         "NumpadSubtract: Decrease rotation speed",
         "1-9: Set number of spirals",
+        "C/c: Change colorMethod ",
         "Spacebar to toggle this display"
     ];
 
