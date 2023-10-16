@@ -26,7 +26,7 @@ const angleIncrement = 0.03;
 const radiusIncrement = 1;
 // Parameters for the sigmoid-like growth of the dot size
 let r0 = 49.35;  // Adjust this for the inflection point of the curve
-let k = 0.01;              // Adjust this to make the transition smoother
+let k = 0.01;    // Adjust this to make the transition smoother
 
 function drawSpiral(offsetAngle) {
     let angle = 0;
@@ -83,107 +83,51 @@ function animate() {
     requestAnimationFrame(animate);
 
     phase += 0.001;
-
-    // requestAnimationFrame(animate);
 }
 
-// Handle keyboard events
 document.addEventListener('keydown', function(event) {
-    switch (event.code) {
-        // ... (rest of the cases remain unchanged)
-        case 'ArrowRight':
-            frequency += 0.05;  // Increase the oscillation frequency
+    const key = event.key.toLowerCase();
+    
+    switch (key) {
+        case 'arrowright':
+            frequency += 0.05;
             break;
-        case 'ArrowLeft':
-            frequency -= 0.1;  // Decrease the oscillation frequency
-            if (frequency < 0.05) frequency = 0; // Ensure positive frequency
+        case 'arrowleft':
+            frequency = Math.max(0, frequency - 0.1);
             break;
-    }
-});
-
-// Handle keyboard events
-document.addEventListener('keydown', function(event) {
-    switch (event.code) {
-        case 'ArrowUp':
+        case 'arrowup':
+            // Handle functionality for ArrowUp...
             if (adjustingParameter === "r0") {
                 r0 += 5;
             } else if (adjustingParameter === "k") {
-                k += 0.01;
+                k += 0.001;
             } else if (event.shiftKey) {
                 maxDotSize += 1;
             } else {
                 minDotSize += 1;
             }
             break;
-            
-        case 'ArrowDown':
+        case 'arrowdown':
             if (adjustingParameter === "r0") {
                 r0 -= 5;
             } else if (adjustingParameter === "k") {
-                k -= 0.01;
+                k -= 0.001;
             } else if (event.shiftKey) {
                 maxDotSize -= 1;
                 if (maxDotSize < 1) {maxDotSize=1} 
             } else {
                 minDotSize -= 1;
                 if (minDotSize < 1) {minDotSize=1} 
-
             }
             break;
-
-        case 'KeyR':
-            if (adjustingParameter === "r0") {
-                adjustingParameter = "none";  // Toggle off if already on
-            } else {
-                adjustingParameter = "r0";
-            }
-            break;
-
-        case 'KeyK':
-            if (adjustingParameter === "k") {
-                adjustingParameter = "none";  // Toggle off if already on
-            } else {
-                adjustingParameter = "k";
-            }
-            break;
-        case 'NumpadAdd':
-            rotationSpeed += 0.001;
-            break;
-        case 'NumpadSubtract':
-            rotationSpeed -= 0.001;
-            if (rotationSpeed < 0) rotationSpeed = 0;
-            break;
-        default:
-            const numKey = event.key;
-            if (numKey >= '1' && numKey <= '9') {
-                numSpirals = parseInt(numKey, 10);
-            }
-            break;
-    }
-});
-
-document.addEventListener('keydown', function(event) {
-    switch (event.key) {
-        // ... (rest of the cases remain unchanged for ArrowUp, ArrowDown, etc.)
-
         case 'r':
-        case 'R':
-            if (adjustingParameter === "r0") {
-                adjustingParameter = "none";  // Toggle off if already on
-            } else {
-                adjustingParameter = "r0";
-            }
+            adjustingParameter = adjustingParameter === "r0" ? "none" : "r0";
             break;
-
         case 'k':
-        case 'K':
-            if (adjustingParameter === "k") {
-                adjustingParameter = "none";  // Toggle off if already on
-            } else {
-                adjustingParameter = "k";
-            }
+            adjustingParameter = adjustingParameter === "k" ? "none" : "k";
             break;
     }
-});
+})
 
-animate();
+
+animate()
