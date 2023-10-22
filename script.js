@@ -1,5 +1,7 @@
 const canvas = document.getElementById('spiralCanvas');
 const ctx = canvas.getContext('2d');
+document.body.style.backgroundColor = 'black';
+
 
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
@@ -9,16 +11,19 @@ let adjustingParameter = "none";  // Can be "none", "r0", or "k"
 const centerX = canvas.width / 2;
 const centerY = canvas.height / 2;
 
+let autoAdujstParams = true;
 let rotation = 0;
 let rotationSpeed = 0.005;
 let colorChange = 10;
 let dotSize = 6;
 let numSpirals = 9;  // Default number of spirals
+let isBackgroundBlack = true; // default to black
+
 
 let time = 0;                 // Variable to drive the oscillation
 let frequency = 0;            // Initial frequency of oscillation
 let oscillationRange = 100;   // Maximum oscillation value (positive and negative)
-let minDotSize = 1;  // Minimum dot size when radius is 0
+let minDotSize = 4;  // Minimum dot size when radius is 0
 let maxDotSize = 28; // Maximum dot size when radius is maxRadius
 let phase=0
 
@@ -29,8 +34,8 @@ colorMethod = colorModes[colorModeIndex];  // Initial setting
 let doDisplayControls = true // Whether or not the control display is visible
 
 const maxRadius = Math.sqrt(centerX * centerX + centerY * centerY);
-const angleIncrement = 0.03;
-const radiusIncrement = 1;
+let angleIncrement = -0.03;
+let radiusIncrement = 1;
 // Parameters for the sigmoid-like growth of the dot size
 let r0 = 84.35;  // Adjust this for the inflection point of the curve
 let k = 0.034;    // Adjust this to make the transition smoother
@@ -73,7 +78,6 @@ function drawDotForSpiral(radius, spiralNumber, colorCallback) {
     const y = radius * Math.sin(angle + offset);
     
     const dynamicDotSize = minDotSize + (maxDotSize - minDotSize) / (1 + Math.exp(-k * (radius - r0)));
-    const currentColorChange = oscillationRange * Math.sin(phase + angle * frequency);
     
     const color = colorCallback(angle, radius);
 
@@ -103,6 +107,17 @@ function animate() {
     if( doDisplayControls ) {
         displayControls()
     }
+
+    // Change stuff to add intrigue
+    if( autoAdujstParams ){
+        r0 = 600 * ( Math.sin( time/17. ) ** 2 ) + 5
+        k = 
+        angleIncrement = .04 * Math.cos( time/20. ) 
+        radiusIncrement = 9 * ( Math.sin( time/25. ) ** 2 ) + 1;  // This dynamically adjusts the radiusIncrement over time
+        // Modifying time to achieve the desired oscillation characteristic
+        const timeModified = Math.sin(time) ** 2;  // Adjust 0.05 to change the frequency of time oscillation
+        k =  0.1 * Math.cos(timeModified);  // Using modified time in k's formula
+    }
     requestAnimationFrame(animate);
 
 }
@@ -110,14 +125,12 @@ function animate() {
 document.addEventListener('keydown', function(event) {
     const key = event.key.toLowerCase();
     
-    console.log(key)
-
     switch (key) {
         case 'arrowright':
-            frequency += 0.05;
+            frequency += 0.01;
             break;
         case 'arrowleft':
-            frequency = Math.max(0, frequency - 0.1);
+            frequency = Math.max(0, frequency - 0.01);
             break;
         case 'arrowup':
             // Handle functionality for ArrowUp...
@@ -142,6 +155,14 @@ document.addEventListener('keydown', function(event) {
             } else {
                 minDotSize -= 1;
                 if (minDotSize < 1) {minDotSize=1} 
+            }
+            break;
+        case 'p':
+            isBackgroundBlack = !isBackgroundBlack;
+            if (isBackgroundBlack) {
+                document.body.style.backgroundColor = 'black';
+            } else {
+                document.body.style.backgroundColor = 'white';
             }
             break;
         case 'r':
