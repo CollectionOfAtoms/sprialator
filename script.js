@@ -13,7 +13,7 @@ const centerY = canvas.height / 2;
 
 let autoAdujstParams = true;
 let rotation = 0;
-let rotationSpeed = 0.005;
+let rotationSpeed = 0.003;
 let colorChange = 10;
 let dotSize = 6;
 let numSpirals = 9;  // Default number of spirals
@@ -41,7 +41,7 @@ const colorModes = ["default", "offsetAngle", "offsetAndRadius", "radiusBased", 
 let colorModeIndex = 2;  // global variable to track the current color mode
 let colorMethod = colorModes[colorModeIndex];  // Initial setting
 
-let doDisplayControls = true // Whether or not the control display is visible
+let doDisplayControls = false // Whether or not the control display is visible
 
 const maxRadius = Math.sqrt(centerX * centerX + centerY * centerY);
 let angleIncrement = -0.03;
@@ -88,6 +88,7 @@ function drawCircle(x, y, size, color) {
 }
 
 function drawSquare(x, y, size, color) {
+    const sideLength = 2 * size;
     const angleToCenter = Math.atan2(y, x);
     
     ctx.save(); // Save the current state of the canvas context
@@ -95,7 +96,7 @@ function drawSquare(x, y, size, color) {
     ctx.rotate(angleToCenter + Math.PI/4); // Rotate the canvas context. The added Math.PI/4 ensures the square's corner points towards the center.
 
     ctx.fillStyle = color;
-    ctx.fillRect(-size/2, -size/2, size, size);
+    ctx.fillRect(-sideLength/2, -sideLength/2, sideLength, sideLength);
 
     ctx.restore(); // Restore the canvas context to its original state
 }
@@ -105,14 +106,15 @@ function drawTriangle(x, y, size, color) {
     
     ctx.save(); // Save the current state of the canvas context
     ctx.translate(x, y); // Move the origin to the current point
-    ctx.rotate(angleToCenter); // Rotate the canvas context. The added Math.PI/2 ensures the triangle points towards the center.
+    ctx.rotate(angleToCenter - Math.PI/2); // Rotate the canvas context. The added Math.PI/2 ensures the triangle points towards the center.
 
-    const height = size * Math.sqrt(3) / 2;
+    const height = 2 * size;
+    const base = 2 * size;
     ctx.beginPath();
     ctx.fillStyle = color;
     ctx.moveTo(0, -height/2);
-    ctx.lineTo(-size/2, height/2);
-    ctx.lineTo(size/2, height/2);
+    ctx.lineTo(-base/2, height/2);
+    ctx.lineTo(base/2, height/2);
     ctx.closePath();
     ctx.fill();
 
@@ -121,6 +123,7 @@ function drawTriangle(x, y, size, color) {
 
 function drawRhombus(x, y, size, color) {
     const angleToCenter = Math.atan2(y, x);
+    const diagonal = 2 * size;
     
     ctx.save(); // Save the current state of the canvas context
     ctx.translate(x, y); // Move the origin to the current point
@@ -128,10 +131,10 @@ function drawRhombus(x, y, size, color) {
 
     ctx.beginPath();
     ctx.fillStyle = color;
-    ctx.moveTo(0, -size/2);
-    ctx.lineTo(size/1.25, 0);
-    ctx.lineTo(0, size/2);
-    ctx.lineTo(-size/1.25, 0);
+    ctx.moveTo(0, -diagonal/2);
+    ctx.lineTo(diagonal/1.25, 0);
+    ctx.lineTo(0, diagonal/2);
+    ctx.lineTo(-diagonal/1.25, 0);
     ctx.closePath();
     ctx.fill();
 
@@ -203,11 +206,10 @@ function animate() {
     // Change stuff to add intrigue
     if( autoAdujstParams ){
         r0 = 600 * ( Math.sin( time/17. ) ** 2 ) + 5
-        k = 
         angleIncrement = .04 * Math.cos( time/20. ) 
         radiusIncrement = 9 * ( Math.sin( time/25. ) ** 2 ) + 1;  // This dynamically adjusts the radiusIncrement over time
         // Modifying time to achieve the desired oscillation characteristic
-        const timeModified = Math.sin(time) ** 2;  // Adjust 0.05 to change the frequency of time oscillation
+        const timeModified = 2*Math.PI * (Math.cos(time/23) ** 2)  ;  // Adjust 0.05 to change the frequency of time oscillation
         k =  0.1 * Math.cos(timeModified);  // Using modified time in k's formula
     }
     requestAnimationFrame(animate);
@@ -299,35 +301,65 @@ function displayControls() {
         "NumpadAdd: Increase rotation speed",
         "NumpadSubtract: Decrease rotation speed",
         "1-9: Set number of spirals",
-        "C/c: Change colorMethod ",
-        "Spacebar to toggle this display"
+        "C/c: Change colorMethod",
+        "S/s: Change shape",
+        "Spacebar to toggle this display",
+        "P/p: Toggle background color"
     ];
 
-    const fontSize = 14;
+    const fontSize = 15;
     const padding = 20;  // Increase padding value
     const lineHeight = fontSize + 4;
     const startX = canvas.width - padding;
     
     ctx.font = `${fontSize}px Arial`;
-    ctx.fillStyle = "black";
+    ctx.strokeStyle = "black"; // Set stroke color to black
+    ctx.lineWidth = 2; // Set stroke width
     ctx.textAlign = "right";
 
     for (let i = 0; i < controls.length; i++) {
+        ctx.strokeText(controls[i], startX, padding + lineHeight * i); // Draw the stroke around the text first
+        ctx.fillStyle = "white"; // Set font color to white
         ctx.fillText(controls[i], startX, padding + lineHeight * i);
     }
+
     ctx.textAlign = "left";  // Reset the text alignment
 
     // display on the left 
+    const readout = [
+        `Adjusting: ${adjustingParameter}`,
+        `autoAdujstParams: ${autoAdujstParams}`,
+        `rotation: ${rotation.toFixed(2)}`,
+        `rotationSpeed: ${rotationSpeed.toFixed(2)}`,
+        `colorChange: ${colorChange}`,
+        `dotSize: ${dotSize}`,
+        `numSpirals: ${numSpirals}`,
+        `isBackgroundBlack: ${isBackgroundBlack}`,
+        `currentShapeIndex: ${currentShapeIndex}`,
+        `currentShape: ${currentShape}`,
+        `time: ${time.toFixed(2)}`,
+        `frequency: ${frequency.toFixed(2)}`,
+        `oscillationRange: ${oscillationRange}`,
+        `minDotSize: ${minDotSize.toFixed(2)}`,
+        `maxDotSize: ${maxDotSize.toFixed(2)}`,
+        `phase: ${phase.toFixed(2)}`,
+        `angleIncrement: ${angleIncrement.toFixed(2)}`,
+        `radiusIncrement: ${radiusIncrement.toFixed(2)}`,
+        `r0: ${r0.toFixed(2)}`,
+        `k: ${k.toFixed(2)}`,
+        `colorModeIndex: ${colorModeIndex}`,
+        `colorMethod: ${colorMethod}`,
+        `doDisplayControls: ${doDisplayControls}`
+    ];
+    
 
-    ctx.font = "20px Arial";
-    ctx.fillStyle = "black";
-    ctx.fillText(`Adjusting: ${adjustingParameter}`, 10, 30);
-    ctx.fillText(`minDotSize: ${minDotSize.toFixed(2)}`, 10, 50);
-    ctx.fillText(`maxDotSize: ${maxDotSize.toFixed(2)}`, 10, 70);
-    ctx.fillText(`r0: ${r0.toFixed(2)}`, 10, 90);
-    ctx.fillText(`k: ${k.toFixed(4)}`, 10, 110);
-    ctx.fillText(`frequency: ${frequency.toFixed(4)}`, 10, 130);
-    ctx.fillText(`colorMethod: ${colorMethod}`, 10, 150)
+    const readoutStartX = padding; // Starting position for the readout on the x-axis
+    ctx.textAlign = "left";
+    for (let i = 0; i < readout.length; i++) {
+        ctx.strokeText(readout[i], readoutStartX, padding + lineHeight * i); // Draw the stroke around the text first
+        ctx.fillStyle = "white"; // Set font color to white
+        ctx.fillText(readout[i], readoutStartX, padding + lineHeight * i);
+    }
 }
 
 
