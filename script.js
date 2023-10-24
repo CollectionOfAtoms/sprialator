@@ -19,14 +19,16 @@ let dotSize = 6;
 let numSpirals = 9;  // Default number of spirals
 let isBackgroundBlack = true; // default to black
 let currentShapeIndex = 0; // index of shape type to default
-const shapes = ["circle", "square", "triangle", "rhombus"]; 
+const shapes = ["circle", "square", "triangle", "rhombus", "random"]; 
 const shapeCallbackMap = {
     "circle" : drawCircle, 
     "square" : drawSquare,
     "triangle" : drawTriangle,
-    "rhombus" : drawRhombus
+    "rhombus" : drawRhombus,
+    "random" : drawRandom
 }
 let currentShape = shapes[currentShapeIndex];
+const dotShapeMemory = {};
 
 let time = 0;                 // Variable to drive the oscillation
 let frequency = 0;            // Initial frequency of oscillation
@@ -86,20 +88,35 @@ function drawCircle(x, y, size, color) {
 }
 
 function drawSquare(x, y, size, color) {
+    const angleToCenter = Math.atan2(y, x);
+    
+    ctx.save(); // Save the current state of the canvas context
+    ctx.translate(x, y); // Move the origin to the current point
+    ctx.rotate(angleToCenter + Math.PI/4); // Rotate the canvas context. The added Math.PI/4 ensures the square's corner points towards the center.
+
     ctx.fillStyle = color;
-    ctx.fillRect(x - size/2, y - size/2, size, size);
+    ctx.fillRect(-size/2, -size/2, size, size);
+
+    ctx.restore(); // Restore the canvas context to its original state
 }
 
 function drawTriangle(x, y, size, color) {
-    const height = size * Math.sqrt(3) / 2;
+    const angleToCenter = Math.atan2(y, x);
     
+    ctx.save(); // Save the current state of the canvas context
+    ctx.translate(x, y); // Move the origin to the current point
+    ctx.rotate(angleToCenter); // Rotate the canvas context. The added Math.PI/2 ensures the triangle points towards the center.
+
+    const height = size * Math.sqrt(3) / 2;
     ctx.beginPath();
     ctx.fillStyle = color;
-    ctx.moveTo(x, y - height/2);
-    ctx.lineTo(x - size/2, y + height/2);
-    ctx.lineTo(x + size/2, y + height/2);
+    ctx.moveTo(0, -height/2);
+    ctx.lineTo(-size/2, height/2);
+    ctx.lineTo(size/2, height/2);
     ctx.closePath();
     ctx.fill();
+
+    ctx.restore(); // Restore the canvas context to its original state
 }
 
 function drawRhombus(x, y, size, color) {
@@ -121,7 +138,30 @@ function drawRhombus(x, y, size, color) {
     ctx.restore(); // Restore the canvas context to its original state
 }
 
-function drawDotForSpiral(radius, spiralNumber, colorCallback) {
+function getRandomValueFromObject(obj) {
+    const keys = Object.keys(obj);
+    const randomIndex = Math.floor(Math.random() * keys.length);
+    const randomKey = keys[randomIndex];
+    return obj[randomKey];
+}
+
+function drawRandom(x, y, size, color, dotIndex) {
+    // Use dotIndex as the unique key
+    const dotKey = dotIndex.toString();
+
+    // If the shape for the current dot is not in memory, select a random shape and store it
+    if (!dotShapeMemory[dotKey]) {
+        const shapeCallbackMapWithoutRandom = { ...shapeCallbackMap };
+        delete shapeCallbackMapWithoutRandom.random;
+        dotShapeMemory[dotKey] = getRandomValueFromObject(shapeCallbackMapWithoutRandom);
+    }
+
+    // Draw the shape associated with the current dot
+    dotShapeMemory[dotKey](x, y, size, color);
+}
+
+
+function drawDotForSpiral(radius, spiralNumber, colorCallback, dotIndex) {
     const offset = 2 * Math.PI / numSpirals * spiralNumber;
     
     const angle = radius * angleIncrement % (2 * Math.PI);
@@ -133,7 +173,7 @@ function drawDotForSpiral(radius, spiralNumber, colorCallback) {
     const color = colorCallback(angle, radius);
 
     // draw the given shape
-    shapeCallbackMap[currentShape](x, y, dynamicDotSize, color)
+    shapeCallbackMap[currentShape](x, y, dynamicDotSize, color, dotIndex)
 }
 
 function animate() {
@@ -142,10 +182,13 @@ function animate() {
     ctx.translate(centerX, centerY);
     ctx.rotate(rotation);
 
+    let dotIndex = 0;
     for (let radius = maxRadius; radius >= 0; radius -= radiusIncrement) {
         for (let i = 0; i < numSpirals; i++) {
-            drawDotForSpiral(radius, i, colorCalculator);
+            drawDotForSpiral(radius, i, colorCalculator, dotIndex);
         }
+
+        dotIndex++;
     }
 
     ctx.restore();
