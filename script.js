@@ -18,7 +18,15 @@ let colorChange = 10;
 let dotSize = 6;
 let numSpirals = 9;  // Default number of spirals
 let isBackgroundBlack = true; // default to black
-
+let currentShapeIndex = 0; // index of shape type to default
+const shapes = ["circle", "square", "triangle", "rhombus"]; 
+const shapeCallbackMap = {
+    "circle" : drawCircle, 
+    "square" : drawSquare,
+    "triangle" : drawTriangle,
+    "rhombus" : drawRhombus
+}
+let currentShape = shapes[currentShapeIndex];
 
 let time = 0;                 // Variable to drive the oscillation
 let frequency = 0;            // Initial frequency of oscillation
@@ -29,7 +37,7 @@ let phase=0
 
 const colorModes = ["default", "offsetAngle", "offsetAndRadius", "radiusBased", "centerColor"];
 let colorModeIndex = 2;  // global variable to track the current color mode
-colorMethod = colorModes[colorModeIndex];  // Initial setting
+let colorMethod = colorModes[colorModeIndex];  // Initial setting
 
 let doDisplayControls = true // Whether or not the control display is visible
 
@@ -70,6 +78,49 @@ function colorCalculator(angle, radius) {
     }
 }
 
+function drawCircle(x, y, size, color) {
+    ctx.beginPath();
+    ctx.fillStyle = color;
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+function drawSquare(x, y, size, color) {
+    ctx.fillStyle = color;
+    ctx.fillRect(x - size/2, y - size/2, size, size);
+}
+
+function drawTriangle(x, y, size, color) {
+    const height = size * Math.sqrt(3) / 2;
+    
+    ctx.beginPath();
+    ctx.fillStyle = color;
+    ctx.moveTo(x, y - height/2);
+    ctx.lineTo(x - size/2, y + height/2);
+    ctx.lineTo(x + size/2, y + height/2);
+    ctx.closePath();
+    ctx.fill();
+}
+
+function drawRhombus(x, y, size, color) {
+    const angleToCenter = Math.atan2(y, x);
+    
+    ctx.save(); // Save the current state of the canvas context
+    ctx.translate(x, y); // Move the origin to the current point
+    ctx.rotate(angleToCenter); // Rotate the canvas context
+
+    ctx.beginPath();
+    ctx.fillStyle = color;
+    ctx.moveTo(0, -size/2);
+    ctx.lineTo(size/1.25, 0);
+    ctx.lineTo(0, size/2);
+    ctx.lineTo(-size/1.25, 0);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.restore(); // Restore the canvas context to its original state
+}
+
 function drawDotForSpiral(radius, spiralNumber, colorCallback) {
     const offset = 2 * Math.PI / numSpirals * spiralNumber;
     
@@ -81,10 +132,8 @@ function drawDotForSpiral(radius, spiralNumber, colorCallback) {
     
     const color = colorCallback(angle, radius);
 
-    ctx.beginPath();
-    ctx.fillStyle = color;
-    ctx.arc(x, y, dynamicDotSize, 0, Math.PI * 2);
-    ctx.fill();
+    // draw the given shape
+    shapeCallbackMap[currentShape](x, y, dynamicDotSize, color)
 }
 
 function animate() {
@@ -178,6 +227,10 @@ document.addEventListener('keydown', function(event) {
             // Increment the index, and wrap it if it exceeds the length of colorModes
             colorModeIndex = (colorModeIndex + 1) % colorModes.length;
             colorMethod = colorModes[colorModeIndex];
+            break;
+        case 's':
+            currentShapeIndex = (currentShapeIndex + 1) % shapes.length;  
+            currentShape = shapes[currentShapeIndex]
             break;
         default:
             const numKey = key;
