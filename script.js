@@ -18,7 +18,7 @@ let colorChange = 10;
 let dotSize = 6;
 let numSpirals = 9;  // Default number of spirals
 let isBackgroundBlack = true; // default to black
-let currentShapeIndex = 0; // index of shape type to default
+let currentShapeIndex = 4; // index of shape type to default
 const shapes = ["circle", "square", "triangle", "rhombus", "random"]; 
 const shapeCallbackMap = {
     "circle" : drawCircle, 
@@ -38,7 +38,7 @@ let maxDotSize = 28; // Maximum dot size when radius is maxRadius
 let phase=0
 
 const colorModes = ["default", "offsetAngle", "offsetAndRadius", "radiusBased", "centerColor", "hueSliceByOffsetAndRadius"];
-let colorModeIndex = 2;  // global variable to track the current color mode
+let colorModeIndex = 5;  // global variable to track the current color mode
 let colorMethod = colorModes[colorModeIndex];  // Initial setting
 let baseHue = 200; // A value between 0 and 360. For example, 200 is a blue hue.
 let hueRange = 50; // The range within which the hue can vary. This will allow hues between 175 and 225 in this example.
