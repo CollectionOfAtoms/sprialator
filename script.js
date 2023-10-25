@@ -37,9 +37,11 @@ let minDotSize = 4;  // Minimum dot size when radius is 0
 let maxDotSize = 28; // Maximum dot size when radius is maxRadius
 let phase=0
 
-const colorModes = ["default", "offsetAngle", "offsetAndRadius", "radiusBased", "centerColor"];
+const colorModes = ["default", "offsetAngle", "offsetAndRadius", "radiusBased", "centerColor", "hueSliceByOffsetAndRadius"];
 let colorModeIndex = 2;  // global variable to track the current color mode
 let colorMethod = colorModes[colorModeIndex];  // Initial setting
+let baseHue = 200; // A value between 0 and 360. For example, 200 is a blue hue.
+let hueRange = 50; // The range within which the hue can vary. This will allow hues between 175 and 225 in this example.
 
 let doDisplayControls = false // Whether or not the control display is visible
 
@@ -50,12 +52,14 @@ let radiusIncrement = 1;
 let r0 = 84.35;  // Adjust this for the inflection point of the curve
 let k = 0.034;    // Adjust this to make the transition smoother
 
+
 function colorCalculator(angle, radius) {
     const angleOffset = Math.PI / 4;  // Adjust as needed
-    
+    let hue
+
     switch (colorMethod) {
         case "offsetAngle":
-            const hue = (angle + angleOffset) * (colorChange + oscillationRange * Math.sin(phase + angle * frequency)) % 360;
+            hue = (angle + angleOffset) * (colorChange + oscillationRange * Math.sin(phase + angle * frequency)) % 360;
             return `hsl(${hue}, 100%, 50%)`;
         
         case "radiusBased":
@@ -63,15 +67,17 @@ function colorCalculator(angle, radius) {
             return `hsl(${hueBasedOnRadius}, 100%, 50%)`;
 
         case "offsetAndRadius":
-            let h = (angle + angleOffset) * (colorChange + oscillationRange * Math.sin(phase + angle * frequency)) % 360;
-            h = h + ( (radius / maxRadius) * 360 + (phase * 500)) % 360;
-            h = h % 360
-            return `hsl(${h}, 100%, 50%)`;
+            hue = (angle + angleOffset) * (colorChange + oscillationRange * Math.sin(phase + angle * frequency)) % 360;
+            hue = hue + ( (radius / maxRadius) * 360 + (phase * 500)) % 360;
+            hue = hue % 360
+            return `hsl(${hue}, 100%, 50%)`;
 
-        case "centerColor":
-            if (radius < 10) {  // This checks if the dot is very close to the center
-                return "blue";  // Set to your desired center color
-            }
+        case "hueSliceByOffsetAndRadius":
+            hue = (angle + angleOffset) * (colorChange + oscillationRange * Math.sin(phase + angle * frequency)) % 360;
+            hue = hue + ( (radius / maxRadius) * 360 + (phase * 500)) % 360;
+            hue = (baseHue + (hue % hueRange)) % 360 
+            return `hsl(${hue}, 100%, 50%)`;
+            
             // If not at the center, fall back to the default calculation:
             
         default:  // This is the default method you provided
@@ -211,6 +217,7 @@ function animate() {
         // Modifying time to achieve the desired oscillation characteristic
         const timeModified = 2*Math.PI * (Math.cos(time/23) ** 2)  ;  // Adjust 0.05 to change the frequency of time oscillation
         k =  0.1 * Math.cos(timeModified);  // Using modified time in k's formula
+        baseHue = ((baseHue) + .1) % 360
     }
     requestAnimationFrame(animate);
 
@@ -221,10 +228,19 @@ document.addEventListener('keydown', function(event) {
     
     switch (key) {
         case 'arrowright':
-            frequency += 0.01;
+            if(adjustingParameter === 'h'){
+                hueRange = Math.min(hueRange + 5, 360)
+            }
+            else{
+                frequency += 0.01;
+            }
             break;
         case 'arrowleft':
-            frequency = Math.max(0, frequency - 0.01);
+            if(adjustingParameter === 'h'){
+                hueRange = Math.max(hueRange - 5, 10)
+            }else{
+                frequency = Math.max(0, frequency - 0.01);
+            }
             break;
         case 'arrowup':
             // Handle functionality for ArrowUp...
@@ -232,7 +248,10 @@ document.addEventListener('keydown', function(event) {
                 r0 += 5;
             } else if (adjustingParameter === "k") {
                 k += 0.001;
-            } else if (event.shiftKey) {
+            }else if (adjustingParameter === "h"){
+                baseHue += 5;
+                baseHue = baseHue % 360
+            }else if (event.shiftKey) {
                 maxDotSize += 1;
             } else {
                 minDotSize += 1;
@@ -243,13 +262,19 @@ document.addEventListener('keydown', function(event) {
                 r0 -= 5;
             } else if (adjustingParameter === "k") {
                 k -= 0.001;
-            } else if (event.shiftKey) {
+            }else if (adjustingParameter === "h"){
+                baseHue -= 5;
+                baseHue = baseHue % 360
+            }else if (event.shiftKey) {
                 maxDotSize -= 1;
                 if (maxDotSize < 1) {maxDotSize=1} 
             } else {
                 minDotSize -= 1;
                 if (minDotSize < 1) {minDotSize=1} 
             }
+            break;
+        case 'h': 
+            adjustingParameter = adjustingParameter === "h" ? "none" : "h";
             break;
         case 'p':
             isBackgroundBlack = !isBackgroundBlack;
@@ -288,14 +313,17 @@ document.addEventListener('keydown', function(event) {
 
 function displayControls() {
 
+
     //Controls on the right 
     const controls = [
-        "ArrowRight: Increase frequency",
-        "ArrowLeft: Decrease frequency",
+        "ArrowRight: Increase color frequency / hueRange",
+        "ArrowLeft: Decrease color frequency / hueRange",
         "ArrowUp: Adjust parameter up",
         "ArrowDown: Adjust parameter down",
         "R/r: Toggle r0",
         "K/k: Toggle k",
+        "H/h: Toggle hue control",
+        "When one of these is toggled arrow functions adjust that parameter",
         "Shift + ArrowUp: Increase max dot size",
         "Shift + ArrowDown: Decrease max dot size",
         "NumpadAdd: Increase rotation speed",
@@ -303,8 +331,9 @@ function displayControls() {
         "1-9: Set number of spirals",
         "C/c: Change colorMethod",
         "S/s: Change shape",
+        "P/p: Toggle background color",
         "Spacebar to toggle this display",
-        "P/p: Toggle background color"
+        
     ];
 
     const fontSize = 15;
@@ -347,6 +376,8 @@ function displayControls() {
         `radiusIncrement: ${radiusIncrement.toFixed(2)}`,
         `r0: ${r0.toFixed(2)}`,
         `k: ${k.toFixed(2)}`,
+        `baseHue: ${baseHue}`,
+        `hueRange: ${hueRange}`,
         `colorModeIndex: ${colorModeIndex}`,
         `colorMethod: ${colorMethod}`,
         `doDisplayControls: ${doDisplayControls}`
