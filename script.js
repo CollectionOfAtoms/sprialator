@@ -1,4 +1,6 @@
-const canvas = document.getElementById('spiralCanvas');
+
+const svg = d3.select("#spiralSVG");
+const canvas = document.getElementById('textCanvas');
 const ctx = canvas.getContext('2d');
 document.body.style.backgroundColor = 'black';
 
@@ -8,8 +10,8 @@ canvas.height = window.innerHeight;
 
 let adjustingParameter = "none";  // Can be "none", "r0", or "k"
 
-const centerX = canvas.width / 2;
-const centerY = canvas.height / 2;
+const centerX = window.innerWidth / 2;
+const centerY = window.innerHeight / 2;
 
 let autoAdujstParams = true;
 let rotation = 0;
@@ -18,14 +20,14 @@ let colorChange = 10;
 let dotSize = 6;
 let numSpirals = 9;  // Default number of spirals
 let isBackgroundBlack = true; // default to black
-let currentShapeIndex = 4; // index of shape type to default
-const shapes = ["circle", "square", "triangle", "rhombus", "random"]; 
+let currentShapeIndex = 0; // index of shape type to default
+const shapes = ["circle"] //, "square", "triangle", "rhombus", "random"]; 
 const shapeCallbackMap = {
     "circle" : drawCircle, 
-    "square" : drawSquare,
-    "triangle" : drawTriangle,
-    "rhombus" : drawRhombus,
-    "random" : drawRandom
+    // "square" : drawSquare,
+    // "triangle" : drawTriangle,
+    // "rhombus" : drawRhombus,
+    // "random" : drawRandom
 }
 let currentShape = shapes[currentShapeIndex];
 const dotShapeMemory = {};
@@ -86,66 +88,74 @@ function colorCalculator(angle, radius) {
     }
 }
 
+// function drawCircle(x, y, size, color) {
+//     ctx.beginPath();
+//     ctx.fillStyle = color;
+//     ctx.arc(x, y, size, 0, Math.PI * 2);
+//     ctx.fill();
+// }
+
 function drawCircle(x, y, size, color) {
-    ctx.beginPath();
-    ctx.fillStyle = color;
-    ctx.arc(x, y, size, 0, Math.PI * 2);
-    ctx.fill();
+    svg.append("circle")
+        .attr("cx", x)
+        .attr("cy", y)
+        .attr("r", size)
+        .attr("fill", color);
 }
 
-function drawSquare(x, y, size, color) {
-    const sideLength = 2 * size;
-    const angleToCenter = Math.atan2(y, x);
+// function drawSquare(x, y, size, color) {
+//     const sideLength = 2 * size;
+//     const angleToCenter = Math.atan2(y, x);
     
-    ctx.save(); // Save the current state of the canvas context
-    ctx.translate(x, y); // Move the origin to the current point
-    ctx.rotate(angleToCenter + Math.PI/4); // Rotate the canvas context. The added Math.PI/4 ensures the square's corner points towards the center.
+//     ctx.save(); // Save the current state of the canvas context
+//     ctx.translate(x, y); // Move the origin to the current point
+//     ctx.rotate(angleToCenter + Math.PI/4); // Rotate the canvas context. The added Math.PI/4 ensures the square's corner points towards the center.
 
-    ctx.fillStyle = color;
-    ctx.fillRect(-sideLength/2, -sideLength/2, sideLength, sideLength);
+//     ctx.fillStyle = color;
+//     ctx.fillRect(-sideLength/2, -sideLength/2, sideLength, sideLength);
 
-    ctx.restore(); // Restore the canvas context to its original state
-}
+//     ctx.restore(); // Restore the canvas context to its original state
+// }
 
-function drawTriangle(x, y, size, color) {
-    const angleToCenter = Math.atan2(y, x);
+// function drawTriangle(x, y, size, color) {
+//     const angleToCenter = Math.atan2(y, x);
     
-    ctx.save(); // Save the current state of the canvas context
-    ctx.translate(x, y); // Move the origin to the current point
-    ctx.rotate(angleToCenter - Math.PI/2); // Rotate the canvas context. The added Math.PI/2 ensures the triangle points towards the center.
+//     ctx.save(); // Save the current state of the canvas context
+//     ctx.translate(x, y); // Move the origin to the current point
+//     ctx.rotate(angleToCenter - Math.PI/2); // Rotate the canvas context. The added Math.PI/2 ensures the triangle points towards the center.
 
-    const height = 2 * size;
-    const base = 2 * size;
-    ctx.beginPath();
-    ctx.fillStyle = color;
-    ctx.moveTo(0, -height/2);
-    ctx.lineTo(-base/2, height/2);
-    ctx.lineTo(base/2, height/2);
-    ctx.closePath();
-    ctx.fill();
+//     const height = 2 * size;
+//     const base = 2 * size;
+//     ctx.beginPath();
+//     ctx.fillStyle = color;
+//     ctx.moveTo(0, -height/2);
+//     ctx.lineTo(-base/2, height/2);
+//     ctx.lineTo(base/2, height/2);
+//     ctx.closePath();
+//     ctx.fill();
 
-    ctx.restore(); // Restore the canvas context to its original state
-}
+//     ctx.restore(); // Restore the canvas context to its original state
+// }
 
-function drawRhombus(x, y, size, color) {
-    const angleToCenter = Math.atan2(y, x);
-    const diagonal = 2 * size;
+// function drawRhombus(x, y, size, color) {
+//     const angleToCenter = Math.atan2(y, x);
+//     const diagonal = 2 * size;
     
-    ctx.save(); // Save the current state of the canvas context
-    ctx.translate(x, y); // Move the origin to the current point
-    ctx.rotate(angleToCenter); // Rotate the canvas context
+//     ctx.save(); // Save the current state of the canvas context
+//     ctx.translate(x, y); // Move the origin to the current point
+//     ctx.rotate(angleToCenter); // Rotate the canvas context
 
-    ctx.beginPath();
-    ctx.fillStyle = color;
-    ctx.moveTo(0, -diagonal/2);
-    ctx.lineTo(diagonal/1.25, 0);
-    ctx.lineTo(0, diagonal/2);
-    ctx.lineTo(-diagonal/1.25, 0);
-    ctx.closePath();
-    ctx.fill();
+//     ctx.beginPath();
+//     ctx.fillStyle = color;
+//     ctx.moveTo(0, -diagonal/2);
+//     ctx.lineTo(diagonal/1.25, 0);
+//     ctx.lineTo(0, diagonal/2);
+//     ctx.lineTo(-diagonal/1.25, 0);
+//     ctx.closePath();
+//     ctx.fill();
 
-    ctx.restore(); // Restore the canvas context to its original state
-}
+//     ctx.restore(); // Restore the canvas context to its original state
+// }
 
 function getRandomValueFromObject(obj) {
     const keys = Object.keys(obj);
@@ -174,18 +184,20 @@ function drawDotForSpiral(radius, spiralNumber, colorCallback, dotIndex) {
     const offset = 2 * Math.PI / numSpirals * spiralNumber;
     
     const angle = radius * angleIncrement % (2 * Math.PI);
-    const x = radius * Math.cos(angle + offset);
-    const y = radius * Math.sin(angle + offset);
+    const x = radius * Math.cos(angle + offset) + window.innerWidth / 2;  // Adjust for center
+    const y = radius * Math.sin(angle + offset) + window.innerHeight / 2;  // Adjust for center
     
     const dynamicDotSize = minDotSize + (maxDotSize - minDotSize) / (1 + Math.exp(-k * (radius - r0)));
     
     const color = colorCallback(angle, radius);
-
+    
     // draw the given shape
     shapeCallbackMap[currentShape](x, y, dynamicDotSize, color, dotIndex)
 }
 
+
 function animate() {
+    svg.selectAll("*").remove();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.save();
     ctx.translate(centerX, centerY);
@@ -219,6 +231,7 @@ function animate() {
         k =  0.1 * Math.cos(timeModified);  // Using modified time in k's formula
         baseHue = ((baseHue) + .1) % 360
     }
+
     requestAnimationFrame(animate);
 
 }
