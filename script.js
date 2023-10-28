@@ -21,13 +21,13 @@ let dotSize = 6;
 let numSpirals = 9;  // Default number of spirals
 let isBackgroundBlack = true; // default to black
 let currentShapeIndex = 0; // index of shape type to default
-const shapes = ["circle"] //, "square", "triangle", "rhombus", "random"]; 
+const shapes = ["circle", "square", "triangle", "rhombus", "random"]; 
 const shapeCallbackMap = {
     "circle" : drawCircle, 
-    // "square" : drawSquare,
-    // "triangle" : drawTriangle,
-    // "rhombus" : drawRhombus,
-    // "random" : drawRandom
+    "square" : drawSquare,
+    "triangle" : drawTriangle,
+    "rhombus" : drawRhombus,
+    "random" : drawRandom
 }
 let currentShape = shapes[currentShapeIndex];
 const dotShapeMemory = {};
@@ -103,59 +103,52 @@ function drawCircle(x, y, size, color) {
         .attr("fill", color);
 }
 
-// function drawSquare(x, y, size, color) {
-//     const sideLength = 2 * size;
-//     const angleToCenter = Math.atan2(y, x);
-    
-//     ctx.save(); // Save the current state of the canvas context
-//     ctx.translate(x, y); // Move the origin to the current point
-//     ctx.rotate(angleToCenter + Math.PI/4); // Rotate the canvas context. The added Math.PI/4 ensures the square's corner points towards the center.
+function drawSquare(x, y, size, color) {
+    const sideLength = 2 * size;
 
-//     ctx.fillStyle = color;
-//     ctx.fillRect(-sideLength/2, -sideLength/2, sideLength, sideLength);
+    const relativeX = x - centerX;
+    const relativeY = y - centerY;
+    const angleToCenter = Math.atan2(relativeY, relativeX) * (180 / Math.PI) + 45; // Convert to degrees and adjust by 45 to make the corner point towards the center
 
-//     ctx.restore(); // Restore the canvas context to its original state
-// }
+    const pathData = `M ${-sideLength/2} ${-sideLength/2} L ${sideLength/2} ${-sideLength/2} L ${sideLength/2} ${sideLength/2} L ${-sideLength/2} ${sideLength/2} Z`;
 
-// function drawTriangle(x, y, size, color) {
-//     const angleToCenter = Math.atan2(y, x);
-    
-//     ctx.save(); // Save the current state of the canvas context
-//     ctx.translate(x, y); // Move the origin to the current point
-//     ctx.rotate(angleToCenter - Math.PI/2); // Rotate the canvas context. The added Math.PI/2 ensures the triangle points towards the center.
+    svg.append("path")
+        .attr("d", pathData)
+        .attr("fill", color)
+        .attr("transform", `translate(${x}, ${y}) rotate(${angleToCenter})`);
+}
 
-//     const height = 2 * size;
-//     const base = 2 * size;
-//     ctx.beginPath();
-//     ctx.fillStyle = color;
-//     ctx.moveTo(0, -height/2);
-//     ctx.lineTo(-base/2, height/2);
-//     ctx.lineTo(base/2, height/2);
-//     ctx.closePath();
-//     ctx.fill();
+function drawTriangle(x, y, size, color) {
+    const height = 2 * size;
+    const base = 2 * size;
 
-//     ctx.restore(); // Restore the canvas context to its original state
-// }
+    const relativeX = x - centerX;
+    const relativeY = y - centerY;
+    const angleToCenter = Math.atan2(relativeY, relativeX) * (180 / Math.PI) - 90; // Convert to degrees and adjust to make the triangle point towards the center
 
-// function drawRhombus(x, y, size, color) {
-//     const angleToCenter = Math.atan2(y, x);
-//     const diagonal = 2 * size;
-    
-//     ctx.save(); // Save the current state of the canvas context
-//     ctx.translate(x, y); // Move the origin to the current point
-//     ctx.rotate(angleToCenter); // Rotate the canvas context
+    const pathData = `M 0 ${-height/2} L ${-base/2} ${height/2} L ${base/2} ${height/2} Z`;
 
-//     ctx.beginPath();
-//     ctx.fillStyle = color;
-//     ctx.moveTo(0, -diagonal/2);
-//     ctx.lineTo(diagonal/1.25, 0);
-//     ctx.lineTo(0, diagonal/2);
-//     ctx.lineTo(-diagonal/1.25, 0);
-//     ctx.closePath();
-//     ctx.fill();
+    svg.append("path")
+        .attr("d", pathData)
+        .attr("fill", color)
+        .attr("transform", `translate(${x}, ${y}) rotate(${angleToCenter})`);
+}
 
-//     ctx.restore(); // Restore the canvas context to its original state
-// }
+function drawRhombus(x, y, size, color) {
+    const diagonal = 2 * size;
+
+    const relativeX = x - centerX;
+    const relativeY = y - centerY;
+    const angleToCenter = Math.atan2(relativeY, relativeX) * (180 / Math.PI); // Convert to degrees
+
+    const pathData = `M 0 ${-diagonal/2} L ${diagonal/1.25} 0 L 0 ${diagonal/2} L ${-diagonal/1.25} 0 Z`;
+
+    svg.append("path")
+        .attr("d", pathData)
+        .attr("fill", color)
+        .attr("transform", `translate(${x}, ${y}) rotate(${angleToCenter})`);
+}
+
 
 function getRandomValueFromObject(obj) {
     const keys = Object.keys(obj);
