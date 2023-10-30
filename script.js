@@ -23,13 +23,6 @@ let numSpirals = 9;  // Default number of spirals
 let isBackgroundBlack = true; // default to black
 let currentShapeIndex = 0; // index of shape type to default
 const shapes = ["circle", "square", "triangle", "rhombus", "random"]; 
-const shapeCallbackMap = {
-    "circle" : drawCircle, 
-    "square" : drawSquare,
-    "triangle" : drawTriangle,
-    "rhombus" : drawRhombus,
-    "random" : drawRandom
-}
 let currentShape = shapes[currentShapeIndex];
 const dotShapeMemory = {};
 
@@ -87,60 +80,6 @@ function colorCalculator(angle, radius) {
             const hueDefault = angle * (colorChange + oscillationRange * Math.sin(phase + angle * frequency)) % 360;
             return `hsl(${hueDefault}, 100%, 50%)`;
     }
-}
-
-function drawCircle(x, y, size, color) {
-    svg.append("circle")
-        .attr("cx", x)
-        .attr("cy", y)
-        .attr("r", size)
-        .attr("fill", color);
-}
-
-function drawSquare(x, y, size, color) {
-    const sideLength = 2 * size;
-
-    const relativeX = x - centerX;
-    const relativeY = y - centerY;
-    const angleToCenter = Math.atan2(relativeY, relativeX) * (180 / Math.PI) + 45; // Convert to degrees and adjust by 45 to make the corner point towards the center
-
-    const pathData = `M ${-sideLength/2} ${-sideLength/2} L ${sideLength/2} ${-sideLength/2} L ${sideLength/2} ${sideLength/2} L ${-sideLength/2} ${sideLength/2} Z`;
-
-    svg.append("path")
-        .attr("d", pathData)
-        .attr("fill", color)
-        .attr("transform", `translate(${x}, ${y}) rotate(${angleToCenter})`);
-}
-
-function drawTriangle(x, y, size, color) {
-    const height = 2 * size;
-    const base = 2 * size;
-
-    const relativeX = x - centerX;
-    const relativeY = y - centerY;
-    const angleToCenter = Math.atan2(relativeY, relativeX) * (180 / Math.PI) - 90; // Convert to degrees and adjust to make the triangle point towards the center
-
-    const pathData = `M 0 ${-height/2} L ${-base/2} ${height/2} L ${base/2} ${height/2} Z`;
-
-    svg.append("path")
-        .attr("d", pathData)
-        .attr("fill", color)
-        .attr("transform", `translate(${x}, ${y}) rotate(${angleToCenter})`);
-}
-
-function drawRhombus(x, y, size, color) {
-    const diagonal = 2 * size;
-
-    const relativeX = x - centerX;
-    const relativeY = y - centerY;
-    const angleToCenter = Math.atan2(relativeY, relativeX) * (180 / Math.PI); // Convert to degrees
-
-    const pathData = `M 0 ${-diagonal/2} L ${diagonal/1.25} 0 L 0 ${diagonal/2} L ${-diagonal/1.25} 0 Z`;
-
-    svg.append("path")
-        .attr("d", pathData)
-        .attr("fill", color)
-        .attr("transform", `translate(${x}, ${y}) rotate(${angleToCenter})`);
 }
 
 function getShapeMorphSteps(startPathData, endPathData){
@@ -204,8 +143,6 @@ function drawShape(shapeName, x, y, scale, color, dotIndex) {
         .attr("fill", color)
         .attr("transform", `translate(${x}, ${y}) rotate(${rotationAngle}) scale(${scale})`);
 }
-
-
 
 function getRandomValueFromObject(obj) {
     const keys = Object.keys(obj);
