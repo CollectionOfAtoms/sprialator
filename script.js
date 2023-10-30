@@ -12,7 +12,7 @@ let adjustingParameter = "none";  // Can be "none", "r0", or "k"
 
 const centerX = window.innerWidth / 2;
 const centerY = window.innerHeight / 2;
-const numMorphSteps = 10
+const numMorphSteps = 200
 
 let autoAdujstParams = true;
 let rotation = 0;
@@ -30,17 +30,21 @@ const shape2Path = {
     'circle' : `M 0 0, m -${majorAxis/2}, 0 a ${majorAxis/2},${majorAxis/2} 0 1,0 ${majorAxis},0 a ${majorAxis/2},${majorAxis/2} 0 1,0 -${majorAxis},0`,
     'square' : `M ${-majorAxis/2} ${-majorAxis/2} L ${majorAxis/2} ${-majorAxis/2} L ${majorAxis/2} ${majorAxis/2} L ${-majorAxis/2} ${majorAxis/2} Z`,
     'triangle' : `M 0 ${-majorAxis/2} L ${-majorAxis/2} ${majorAxis/2} L ${majorAxis/2} ${majorAxis/2} Z`,
-    'rhombus' : `M 0 ${-majorAxis/2} L ${majorAxis/1.25} 0 L 0 ${majorAxis/2} L ${-majorAxis/1.25} 0 Z`
- };
+    'rhombus' : `M 0 ${-majorAxis/2} L ${majorAxis/1.25} 0 L 0 ${majorAxis/2} L ${-majorAxis/1.25} 0 Z`,
+    // 'einstein' : "M -0.5,0.1989752348420153 L -1,0.6011955593509819 L -0.8341584158415842,0.9982920580700256 L -0.16584158415841577,0.9982920580700256 L 0.0006188118811880639,0.5977796754910332 L 0.49938118811881194,0.9999999999999998 L 1,0.6003415883859948 L 0.8347772277227723,0.1989752348420153 L 0.5006188118811883,0.1989752348420153 L 0.504950495049505,-0.5994876174210078 L 0,-1 L -0.16584158415841577,-0.5994876174210078 L -0.5,-0.5994876174210078 Z"
+};
 
  const extraRotation = {
      'circle' : 0,
      'square' : 45,
      'triangle' : -90,
-     'rhombus' : 0
+     'rhombus' : 0,
+    //  'einstein' : 0
  };
 
  const shapeMorphCombinations = getAllShapeMorphCombinations()
+
+ console.log(shapeMorphCombinations)
 
 let currentShape = shapes[currentShapeIndex];
 let lastShape = 'none';
@@ -49,8 +53,8 @@ const dotShapeMemory = {};
 let time = 0;                 // Variable to drive the oscillation
 let frequency = 0;            // Initial frequency of oscillation
 let oscillationRange = 100;   // Maximum oscillation value (positive and negative)
-let minDotSize = 4;  // Minimum dot size when radius is 0
-let maxDotSize = 28; // Maximum dot size when radius is maxRadius
+let minDotSize = 10;  // Minimum dot size when radius is 0
+let maxDotSize = 66; // Maximum dot size when radius is maxRadius
 let phase=0
 
 const colorModes = ["default", "offsetAngle", "offsetAndRadius", "radiusBased", "centerColor", "hueSliceByOffsetAndRadius"];
@@ -123,12 +127,11 @@ function getAllShapeMorphCombinations(){
     for (let startShape of shapeNames) {
         shapeCombinations[startShape] = {};  // Initialize an inner object for the start shape
         for (let endShape of shapeNames) {
-            if (startShape !== endShape) {  // Avoid morphing a shape to itself
-                const startPathData = shape2Path[startShape];
-                const endPathData = shape2Path[endShape];
-                const intermediateShapes = getShapeMorphSteps(startPathData, endPathData);
-                shapeCombinations[startShape][endShape] = intermediateShapes;
-            }
+            // Avoid morphing a shape to itself
+            const startPathData = shape2Path[startShape];
+            const endPathData = shape2Path[endShape];
+            const intermediateShapes = getShapeMorphSteps(startPathData, endPathData);
+            shapeCombinations[startShape][endShape] = intermediateShapes;
         }
     }
 
@@ -143,17 +146,20 @@ function drawShape(shapeName, x, y, scale, color, dotIndex) {
     let pathData, rotationAngle
 
     if (shapeName == 'random'){
-         // Use dotIndex as the unique key
-        const dotKey = dotIndex.toString();
 
+        // Use dotIndex as the unique key
+        const dotKey = dotIndex.toString();
         // If the shape for the current dot is not in memory, select a random shape and store it
         if (!dotShapeMemory[dotKey]) {
-            dotShapeMemory[dotKey] = getRandomKey(shape2Path)
+            dotShapeMemory[dotKey] = {
+                shape: getRandomKey(shape2Path),
+                morphState: 0
+            }
         }
 
         // Draw the shape associated with the current dot
-        pathData = shape2Path[dotShapeMemory[dotKey]]; 
-        rotationAngle = angleToCenter + extraRotation[dotShapeMemory[dotKey]]
+        pathData = shape2Path[dotShapeMemory[dotKey].shape]; 
+        rotationAngle = angleToCenter + extraRotation[dotShapeMemory[dotKey].shape]
     }
     else{
         pathData = shape2Path[shapeName];
@@ -166,6 +172,17 @@ function drawShape(shapeName, x, y, scale, color, dotIndex) {
         .attr("d", pathData)
         .attr("fill", color)
         .attr("transform", `translate(${x}, ${y}) rotate(${rotationAngle}) scale(${scale})`);
+}
+
+function drawShapeFromPath(pathData, x, y, scale, color) {
+    const relativeX = x - centerX;
+    const relativeY = y - centerY;
+    const angleToCenter = Math.atan2(relativeY, relativeX) * (180 / Math.PI);
+
+    svg.append("path")
+        .attr("d", pathData)
+        .attr("fill", color)
+        .attr("transform", `translate(${x}, ${y}) rotate(${angleToCenter}) scale(${scale})`);
 }
 
 function getRandomValueFromObject(obj) {
@@ -195,7 +212,27 @@ function drawDotForSpiral(radius, spiralNumber, colorCallback, dotIndex) {
     const color = colorCallback(angle, radius);
     
     // draw the given shape
-    drawShape(currentShape, x, y, dynamicDotSize, color, dotIndex)   
+
+    if (dotShapeMemory[dotIndex]) {
+        const currentMorphState = dotShapeMemory[dotIndex].morphState;
+        
+        let startShape = lastShape;
+        let endShape = currentShape;
+        
+        if (lastShape === 'random') {
+            startShape = dotShapeMemory[dotIndex].shape;
+        }
+        
+        if (currentShape === 'random') {
+            endShape = dotShapeMemory[dotIndex].shape;
+        }
+        
+        const pathData = shapeMorphCombinations[startShape][endShape][currentMorphState];
+        drawShapeFromPath(pathData, x, y, dynamicDotSize, color);
+    } else {
+        drawShape(currentShape, x, y, dynamicDotSize, color, dotIndex);
+    }
+    // drawShape(currentShape, x, y, dynamicDotSize, color, dotIndex)   
 }
 
 
@@ -211,10 +248,8 @@ function animate() {
         for (let i = 0; i < numSpirals; i++) {
             drawDotForSpiral(radius, i, colorCalculator, dotIndex);
         }
-
         dotIndex++;
     }
-
     ctx.restore();
     rotation += rotationSpeed;
     phase += 0.001;
@@ -224,11 +259,17 @@ function animate() {
         displayControls()
     }
 
+    for (let dotIndex in dotShapeMemory) {
+        if (dotShapeMemory[dotIndex].morphState < numMorphSteps - 1) {
+            dotShapeMemory[dotIndex].morphState++;
+        }
+    }
+
     // Change stuff to add intrigue
     if( autoAdujstParams ){
         r0 = 600 * ( Math.sin( time/17. ) ** 2 ) + 5
         angleIncrement = .04 * Math.cos( time/20. ) 
-        // radiusIncrement = 9 * ( Math.sin( time/25. ) ** 2 ) + 1;  // This dynamically adjusts the radiusIncrement over time
+        radiusIncrement = 4 * ( Math.sin( time/25. ) ** 2 ) + 6;  // This dynamically adjusts the radiusIncrement over time
         // Modifying time to achieve the desired oscillation characteristic
         const timeModified = 2*Math.PI * (Math.cos(time/23) ** 2)  ;  // Adjust 0.05 to change the frequency of time oscillation
         k =  0.1 * Math.cos(timeModified);  // Using modified time in k's formula
@@ -314,8 +355,14 @@ document.addEventListener('keydown', function(event) {
             colorMethod = colorModes[colorModeIndex];
             break;
         case 's':
+            lastShape = currentShape;
             currentShapeIndex = (currentShapeIndex + 1) % shapes.length;  
-            currentShape = shapes[currentShapeIndex]
+            currentShape = shapes[currentShapeIndex];
+        
+            // Reset dotShapeMemory for all dots
+            for (let dotIndex in dotShapeMemory) {
+                dotShapeMemory[dotIndex].morphState = 0;
+            }
             break;
         default:
             const numKey = key;
