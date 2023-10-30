@@ -23,7 +23,27 @@ let numSpirals = 9;  // Default number of spirals
 let isBackgroundBlack = true; // default to black
 let currentShapeIndex = 0; // index of shape type to default
 const shapes = ["circle", "square", "triangle", "rhombus", "random"]; 
+
+const majorAxis = 1;
+
+const shape2Path = {
+    'circle' : `M 0 0, m -${majorAxis/2}, 0 a ${majorAxis/2},${majorAxis/2} 0 1,0 ${majorAxis},0 a ${majorAxis/2},${majorAxis/2} 0 1,0 -${majorAxis},0`,
+    'square' : `M ${-majorAxis/2} ${-majorAxis/2} L ${majorAxis/2} ${-majorAxis/2} L ${majorAxis/2} ${majorAxis/2} L ${-majorAxis/2} ${majorAxis/2} Z`,
+    'triangle' : `M 0 ${-majorAxis/2} L ${-majorAxis/2} ${majorAxis/2} L ${majorAxis/2} ${majorAxis/2} Z`,
+    'rhombus' : `M 0 ${-majorAxis/2} L ${majorAxis/1.25} 0 L 0 ${majorAxis/2} L ${-majorAxis/1.25} 0 Z`
+ };
+
+ const extraRotation = {
+     'circle' : 0,
+     'square' : 45,
+     'triangle' : -90,
+     'rhombus' : 0
+ };
+
+ const shapeMorphCombinations = getAllShapeMorphCombinations()
+
 let currentShape = shapes[currentShapeIndex];
+let lastShape = 'none';
 const dotShapeMemory = {};
 
 let time = 0;                 // Variable to drive the oscillation
@@ -87,31 +107,35 @@ function getShapeMorphSteps(startPathData, endPathData){
 
     const interpolator = d3.interpolatePath(startPathData, endPathData);
 
-    const morphingSteps = Array.from({ length: numSteps }, (_, i) => {
-        return interpolator(i / (numSteps - 1));
+    const morphingSteps = Array.from({ length: numMorphSteps }, (_, i) => {
+        return interpolator(i / (numMorphSteps - 1));
     });
 
     return morphingSteps
-}           
+}  
+
+function getAllShapeMorphCombinations(){
+    const shapeCombinations = {};
+
+    const shapeNames = Object.keys(shape2Path);
+
+    // Iterate through each combination of start and end shapes
+    for (let startShape of shapeNames) {
+        shapeCombinations[startShape] = {};  // Initialize an inner object for the start shape
+        for (let endShape of shapeNames) {
+            if (startShape !== endShape) {  // Avoid morphing a shape to itself
+                const startPathData = shape2Path[startShape];
+                const endPathData = shape2Path[endShape];
+                const intermediateShapes = getShapeMorphSteps(startPathData, endPathData);
+                shapeCombinations[startShape][endShape] = intermediateShapes;
+            }
+        }
+    }
+
+    return shapeCombinations
+}
 
 function drawShape(shapeName, x, y, scale, color, dotIndex) {
-
-    const majorAxis = 1;
-
-    const shape2Path = {
-       'circle' : `M 0 0, m -${majorAxis/2}, 0 a ${majorAxis/2},${majorAxis/2} 0 1,0 ${majorAxis},0 a ${majorAxis/2},${majorAxis/2} 0 1,0 -${majorAxis},0`,
-       'square' : `M ${-majorAxis/2} ${-majorAxis/2} L ${majorAxis/2} ${-majorAxis/2} L ${majorAxis/2} ${majorAxis/2} L ${-majorAxis/2} ${majorAxis/2} Z`,
-       'triangle' : `M 0 ${-majorAxis/2} L ${-majorAxis/2} ${majorAxis/2} L ${majorAxis/2} ${majorAxis/2} Z`,
-       'rhombus' : `M 0 ${-majorAxis/2} L ${majorAxis/1.25} 0 L 0 ${majorAxis/2} L ${-majorAxis/1.25} 0 Z`
-    };
-
-    const extraRotation = {
-        'circle' : 0,
-        'square' : 45,
-        'triangle' : -90,
-        'rhombus' : 0
-    };
-
     const relativeX = x - centerX;
     const relativeY = y - centerY;
     const angleToCenter = Math.atan2(relativeY, relativeX) * (180 / Math.PI); // Convert to degrees
@@ -149,21 +173,6 @@ function getRandomValueFromObject(obj) {
     const randomIndex = Math.floor(Math.random() * keys.length);
     const randomKey = keys[randomIndex];
     return obj[randomKey];
-}
-
-function drawRandom(x, y, size, color, dotIndex) {
-    // Use dotIndex as the unique key
-    const dotKey = dotIndex.toString();
-
-    // If the shape for the current dot is not in memory, select a random shape and store it
-    if (!dotShapeMemory[dotKey]) {
-        const shapeCallbackMapWithoutRandom = { ...shapeCallbackMap };
-        delete shapeCallbackMapWithoutRandom.random;
-        dotShapeMemory[dotKey] = getRandomValueFromObject(shapeCallbackMapWithoutRandom);
-    }
-
-    // Draw the shape associated with the current dot
-    dotShapeMemory[dotKey](x, y, size, color);
 }
 
 function getRandomKey(obj) {
@@ -227,7 +236,6 @@ function animate() {
     }
 
     requestAnimationFrame(animate);
-
 }
 
 document.addEventListener('keydown', function(event) {
@@ -319,8 +327,6 @@ document.addEventListener('keydown', function(event) {
 })
 
 function displayControls() {
-
-
     //Controls on the right 
     const controls = [
         "ArrowRight: Increase color frequency / hueRange",
