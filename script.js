@@ -12,6 +12,7 @@ let adjustingParameter = "none";  // Can be "none", "r0", or "k"
 
 const centerX = window.innerWidth / 2;
 const centerY = window.innerHeight / 2;
+const numMorphSteps = 10
 
 let autoAdujstParams = true;
 let rotation = 0;
@@ -49,7 +50,7 @@ let doDisplayControls = false // Whether or not the control display is visible
 
 const maxRadius = Math.sqrt(centerX * centerX + centerY * centerY);
 let angleIncrement = -0.03;
-let radiusIncrement = 1;
+let radiusIncrement = 10;
 // Parameters for the sigmoid-like growth of the dot size
 let r0 = 84.35;  // Adjust this for the inflection point of the curve
 let k = 0.034;    // Adjust this to make the transition smoother
@@ -87,13 +88,6 @@ function colorCalculator(angle, radius) {
             return `hsl(${hueDefault}, 100%, 50%)`;
     }
 }
-
-// function drawCircle(x, y, size, color) {
-//     ctx.beginPath();
-//     ctx.fillStyle = color;
-//     ctx.arc(x, y, size, 0, Math.PI * 2);
-//     ctx.fill();
-// }
 
 function drawCircle(x, y, size, color) {
     svg.append("circle")
@@ -149,6 +143,69 @@ function drawRhombus(x, y, size, color) {
         .attr("transform", `translate(${x}, ${y}) rotate(${angleToCenter})`);
 }
 
+function getShapeMorphSteps(startPathData, endPathData){
+    // Returns an array with intermediate paths botween two SVG paths. 
+
+    const interpolator = d3.interpolatePath(startPathData, endPathData);
+
+    const morphingSteps = Array.from({ length: numSteps }, (_, i) => {
+        return interpolator(i / (numSteps - 1));
+    });
+
+    return morphingSteps
+}           
+
+function drawShape(shapeName, x, y, scale, color, dotIndex) {
+
+    const majorAxis = 1;
+
+    const shape2Path = {
+       'circle' : `M 0 0, m -${majorAxis/2}, 0 a ${majorAxis/2},${majorAxis/2} 0 1,0 ${majorAxis},0 a ${majorAxis/2},${majorAxis/2} 0 1,0 -${majorAxis},0`,
+       'square' : `M ${-majorAxis/2} ${-majorAxis/2} L ${majorAxis/2} ${-majorAxis/2} L ${majorAxis/2} ${majorAxis/2} L ${-majorAxis/2} ${majorAxis/2} Z`,
+       'triangle' : `M 0 ${-majorAxis/2} L ${-majorAxis/2} ${majorAxis/2} L ${majorAxis/2} ${majorAxis/2} Z`,
+       'rhombus' : `M 0 ${-majorAxis/2} L ${majorAxis/1.25} 0 L 0 ${majorAxis/2} L ${-majorAxis/1.25} 0 Z`
+    };
+
+    const extraRotation = {
+        'circle' : 0,
+        'square' : 45,
+        'triangle' : -90,
+        'rhombus' : 0
+    };
+
+    const relativeX = x - centerX;
+    const relativeY = y - centerY;
+    const angleToCenter = Math.atan2(relativeY, relativeX) * (180 / Math.PI); // Convert to degrees
+
+    let pathData, rotationAngle
+
+    if (shapeName == 'random'){
+         // Use dotIndex as the unique key
+        const dotKey = dotIndex.toString();
+
+        // If the shape for the current dot is not in memory, select a random shape and store it
+        if (!dotShapeMemory[dotKey]) {
+            dotShapeMemory[dotKey] = getRandomKey(shape2Path)
+        }
+
+        // Draw the shape associated with the current dot
+        pathData = shape2Path[dotShapeMemory[dotKey]]; 
+        rotationAngle = angleToCenter + extraRotation[dotShapeMemory[dotKey]]
+    }
+    else{
+        pathData = shape2Path[shapeName];
+        rotationAngle = angleToCenter + extraRotation[shapeName]
+    }
+
+    // rotationAngle = 50
+
+    svg.append("path")
+        .attr("d", pathData)
+        .attr("fill", color)
+        .attr("transform", `translate(${x}, ${y}) rotate(${rotationAngle}) scale(${scale})`);
+}
+
+
 
 function getRandomValueFromObject(obj) {
     const keys = Object.keys(obj);
@@ -172,6 +229,13 @@ function drawRandom(x, y, size, color, dotIndex) {
     dotShapeMemory[dotKey](x, y, size, color);
 }
 
+function getRandomKey(obj) {
+    //Gets a random key off an object
+    const keys = Object.keys(obj);
+    const randomIndex = Math.floor(Math.random() * keys.length);
+    return keys[randomIndex];
+}
+
 
 function drawDotForSpiral(radius, spiralNumber, colorCallback, dotIndex) {
     const offset = 2 * Math.PI / numSpirals * spiralNumber;
@@ -185,7 +249,7 @@ function drawDotForSpiral(radius, spiralNumber, colorCallback, dotIndex) {
     const color = colorCallback(angle, radius);
     
     // draw the given shape
-    shapeCallbackMap[currentShape](x, y, dynamicDotSize, color, dotIndex)
+    drawShape(currentShape, x, y, dynamicDotSize, color, dotIndex)   
 }
 
 
@@ -218,7 +282,7 @@ function animate() {
     if( autoAdujstParams ){
         r0 = 600 * ( Math.sin( time/17. ) ** 2 ) + 5
         angleIncrement = .04 * Math.cos( time/20. ) 
-        radiusIncrement = 9 * ( Math.sin( time/25. ) ** 2 ) + 1;  // This dynamically adjusts the radiusIncrement over time
+        // radiusIncrement = 9 * ( Math.sin( time/25. ) ** 2 ) + 1;  // This dynamically adjusts the radiusIncrement over time
         // Modifying time to achieve the desired oscillation characteristic
         const timeModified = 2*Math.PI * (Math.cos(time/23) ** 2)  ;  // Adjust 0.05 to change the frequency of time oscillation
         k =  0.1 * Math.cos(timeModified);  // Using modified time in k's formula
