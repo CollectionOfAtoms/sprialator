@@ -1,4 +1,3 @@
-
 const svg = d3.select("#spiralSVG");
 const canvas = document.getElementById('textCanvas');
 const ctx = canvas.getContext('2d');
@@ -27,10 +26,10 @@ const shapes = ["circle", "square", "triangle", "rhombus", "random"];
 const majorAxis = 1;
 
 const shape2Path = {
-    'circle' : `M 0 0, m -${majorAxis/2}, 0 a ${majorAxis/2},${majorAxis/2} 0 1,0 ${majorAxis},0 a ${majorAxis/2},${majorAxis/2} 0 1,0 -${majorAxis},0`,
-    'square' : `M ${-majorAxis/2} ${-majorAxis/2} L ${majorAxis/2} ${-majorAxis/2} L ${majorAxis/2} ${majorAxis/2} L ${-majorAxis/2} ${majorAxis/2} Z`,
-    'triangle' : `M 0 ${-majorAxis/2} L ${-majorAxis/2} ${majorAxis/2} L ${majorAxis/2} ${majorAxis/2} Z`,
-    'rhombus' : `M 0 ${-majorAxis/2} L ${majorAxis/1.25} 0 L 0 ${majorAxis/2} L ${-majorAxis/1.25} 0 Z`,
+    'circle' : `M 0 -0.5 L 0.35 -0.35 L 0.5 0 L 0.35 0.35 L 0 0.5 L -0.35 0.35 L -0.5 0 L -0.35 -0.35 Z`,
+    'square' : `M 0 -0.5 L 0.5 -0.5 L 0.5 0 L 0.5 0.5 L 0 0.5 L -0.5 0.5 L -0.5 0 L -0.5 -0.5 Z`,
+    'triangle' : `M -.5 .25 L 0 -.75 L .5 .25 L .3 .25 L .1 .25 L -.1 .25 L -.3 .25 L -.5 .25 Z`,
+    'rhombus' : `M 0 -0.5 L 0.4 -0.25 L 0.8 0 L 0.4 0.25 L 0 0.5 L -0.4 0.25 L -0.8 0 L -0.4 -0.25 Z`,
     // 'einstein' : "M -0.5,0.1989752348420153 L -1,0.6011955593509819 L -0.8341584158415842,0.9982920580700256 L -0.16584158415841577,0.9982920580700256 L 0.0006188118811880639,0.5977796754910332 L 0.49938118811881194,0.9999999999999998 L 1,0.6003415883859948 L 0.8347772277227723,0.1989752348420153 L 0.5006188118811883,0.1989752348420153 L 0.504950495049505,-0.5994876174210078 L 0,-1 L -0.16584158415841577,-0.5994876174210078 L -0.5,-0.5994876174210078 Z"
 };
 
@@ -53,7 +52,7 @@ const dotShapeMemory = {};
 let time = 0;                 // Variable to drive the oscillation
 let frequency = 0;            // Initial frequency of oscillation
 let oscillationRange = 100;   // Maximum oscillation value (positive and negative)
-let minDotSize = 10;  // Minimum dot size when radius is 0
+let minDotSize = 17;  // Minimum dot size when radius is 0
 let maxDotSize = 66; // Maximum dot size when radius is maxRadius
 let phase=0
 
@@ -174,10 +173,11 @@ function drawShape(shapeName, x, y, scale, color, dotIndex) {
         .attr("transform", `translate(${x}, ${y}) rotate(${rotationAngle}) scale(${scale})`);
 }
 
-function drawShapeFromPath(pathData, x, y, scale, color) {
+function drawShapeFromPath(pathData, x, y, scale, color, rotation) {
     const relativeX = x - centerX;
     const relativeY = y - centerY;
-    const angleToCenter = Math.atan2(relativeY, relativeX) * (180 / Math.PI);
+    
+    const angleToCenter = Math.atan2(relativeY, relativeX) * (180 / Math.PI) + rotation;
 
     svg.append("path")
         .attr("d", pathData)
@@ -228,7 +228,16 @@ function drawDotForSpiral(radius, spiralNumber, colorCallback, dotIndex) {
         }
         
         const pathData = shapeMorphCombinations[startShape][endShape][currentMorphState];
-        drawShapeFromPath(pathData, x, y, dynamicDotSize, color);
+        
+        //Shapes should be rotated at the same angle that their last shape is defined to be when they start
+        //And at the same angle as the current shape is defined when they end
+        let shapeRotation = 0
+
+        const startAngle = extraRotation[startShape]
+        const endAngle = extraRotation[endShape]
+        shapeRotation = startAngle + (endAngle-startAngle)*(currentMorphState/numMorphSteps)
+
+        drawShapeFromPath(pathData, x, y, dynamicDotSize, color, shapeRotation);
     } else {
         drawShape(currentShape, x, y, dynamicDotSize, color, dotIndex);
     }
@@ -253,7 +262,7 @@ function animate() {
     ctx.restore();
     rotation += rotationSpeed;
     phase += 0.001;
-    time += 0.01;  // Increment the time variable for the oscillation
+    time += 0.0078125;  // Increment the time variable for the oscillation.  Use a power of 2 for full precisions floating point maths
     
     if( doDisplayControls ) {
         displayControls()
@@ -267,13 +276,26 @@ function animate() {
 
     // Change stuff to add intrigue
     if( autoAdujstParams ){
-        r0 = 600 * ( Math.sin( time/17. ) ** 2 ) + 5
+        r0 = 600 * ( Math.sin( time/17. ) ** 2 ) + 50
         angleIncrement = .04 * Math.cos( time/20. ) 
-        radiusIncrement = 4 * ( Math.sin( time/25. ) ** 2 ) + 6;  // This dynamically adjusts the radiusIncrement over time
+        radiusIncrement = 1 * ( Math.sin( time/25. ) ** 2 ) + 9;  // This dynamically adjusts the radiusIncrement over time
         // Modifying time to achieve the desired oscillation characteristic
         const timeModified = 2*Math.PI * (Math.cos(time/23) ** 2)  ;  // Adjust 0.05 to change the frequency of time oscillation
         k =  0.1 * Math.cos(timeModified);  // Using modified time in k's formula
         baseHue = ((baseHue) + .1) % 360
+
+        // Auto change shapes
+        if (time % 16 == 0){
+            lastShape = currentShape;
+            currentShapeIndex = (currentShapeIndex + 1) % shapes.length;  
+            currentShape = shapes[currentShapeIndex];
+        
+            // Reset dotShapeMemory for all dots
+            for (let dotIndex in dotShapeMemory) {
+                dotShapeMemory[dotIndex].morphState = 0;
+            }
+        }
+
     }
 
     requestAnimationFrame(animate);
