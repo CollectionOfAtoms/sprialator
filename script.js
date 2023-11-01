@@ -46,7 +46,7 @@ const shape2Path = {
  console.log(shapeMorphCombinations)
 
 let currentShape = shapes[currentShapeIndex];
-let lastShape = 'none';
+let lastShape = shapes[currentShapeIndex];
 const dotShapeMemory = {};
 
 let time = 0;                 // Variable to drive the oscillation
@@ -144,18 +144,17 @@ function drawShape(shapeName, x, y, scale, color, dotIndex) {
 
     let pathData, rotationAngle
 
-    if (shapeName == 'random'){
-
-        // Use dotIndex as the unique key
-        const dotKey = dotIndex.toString();
-        // If the shape for the current dot is not in memory, select a random shape and store it
-        if (!dotShapeMemory[dotKey]) {
-            dotShapeMemory[dotKey] = {
-                shape: getRandomKey(shape2Path),
-                morphState: 0
-            }
+    // Use dotIndex as the unique key
+    const dotKey = dotIndex.toString();
+    // If the shape for the current dot is not in memory, select a random shape and store it
+    if (!dotShapeMemory[dotKey]) {
+        dotShapeMemory[dotKey] = {
+            shape: getRandomKey(shape2Path),
+            morphState: 0
         }
+    }
 
+    if (shapeName == 'random'){
         // Draw the shape associated with the current dot
         pathData = shape2Path[dotShapeMemory[dotKey].shape]; 
         rotationAngle = angleToCenter + extraRotation[dotShapeMemory[dotKey].shape]
