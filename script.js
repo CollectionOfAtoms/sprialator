@@ -56,7 +56,7 @@ let minDotSize = 17;  // Minimum dot size when radius is 0
 let maxDotSize = 66; // Maximum dot size when radius is maxRadius
 let phase=0
 
-const colorModes = ["default", "offsetAngle", "offsetAndRadius", "radiusBased", "centerColor", "hueSliceByOffsetAndRadius"];
+const colorModes = ["default", "offsetAngle", "offsetAndRadius", "radiusBased", "centerColor", "hueSliceByOffsetAndRadius", "grayscale", "constantHue"];
 let colorModeIndex = 5;  // global variable to track the current color mode
 let colorMethod = colorModes[colorModeIndex];  // Initial setting
 let baseHue = 200; // A value between 0 and 360. For example, 200 is a blue hue.
@@ -96,9 +96,16 @@ function colorCalculator(angle, radius) {
             hue = hue + ( (radius / maxRadius) * 360 + (phase * 500)) % 360;
             hue = (baseHue + (hue % hueRange)) % 360 
             return `hsl(${hue}, 100%, 50%)`;
-            
-            // If not at the center, fall back to the default calculation:
-            
+
+        case "grayscale":
+                const intensity = Math.abs(Math.sin(angle)) * 255;
+                return `rgb(${intensity}, ${intensity}, ${intensity})`;
+        
+        case "constantHue":
+            const saturation = Math.abs(Math.sin(angle)) * 100;
+            const lightness = Math.abs(Math.cos(radius)) * 50 + 50;
+            return `hsl(${baseHue}, ${saturation}%, ${lightness}%)`;
+                    
         default:  // This is the default method you provided
             const hueDefault = angle * (colorChange + oscillationRange * Math.sin(phase + angle * frequency)) % 360;
             return `hsl(${hueDefault}, 100%, 50%)`;
