@@ -20,7 +20,7 @@ let colorChange = 10;
 let dotSize = 6;
 let numSpirals = 9;  // Default number of spirals
 let isBackgroundBlack = true; // default to black
-let currentShapeIndex = 0; // index of shape type to default
+let currentShapeIndex = 2; // index of shape type to default
 const shapes = ["circle", "square", "triangle", "rhombus", "random"]; 
 
 const majorAxis = 1;
@@ -52,12 +52,12 @@ const dotShapeMemory = {};
 let time = 0;                 // Variable to drive the oscillation
 let frequency = 0;            // Initial frequency of oscillation
 let oscillationRange = 100;   // Maximum oscillation value (positive and negative)
-let minDotSize = 17;  // Minimum dot size when radius is 0
+let minDotSize = 30;  // Minimum dot size when radius is 0
 let maxDotSize = 66; // Maximum dot size when radius is maxRadius
 let phase=0
 
-const colorModes = ["default", "offsetAngle", "offsetAndRadius", "radiusBased", "centerColor", "hueSliceByOffsetAndRadius", "grayscale", "constantHue"];
-let colorModeIndex = 5;  // global variable to track the current color mode
+const colorModes = ["default", "offsetAngle", "offsetAndRadius", "radiusBased", "centerColor", "hueSliceByOffsetAndRadius", "grayscale_hsl", "constantHue"];
+let colorModeIndex = 3;  // global variable to track the current color mode
 let colorMethod = colorModes[colorModeIndex];  // Initial setting
 let baseHue = 200; // A value between 0 and 360. For example, 200 is a blue hue.
 let hueRange = 50; // The range within which the hue can vary. This will allow hues between 175 and 225 in this example.
@@ -74,7 +74,7 @@ let k = 0.034;    // Adjust this to make the transition smoother
 
 function colorCalculator(angle, radius) {
     const angleOffset = Math.PI / 4;  // Adjust as needed
-    let hue
+    let hue, saturation, lightness
 
     switch (colorMethod) {
         case "offsetAngle":
@@ -82,8 +82,8 @@ function colorCalculator(angle, radius) {
             return `hsl(${hue}, 100%, 50%)`;
         
         case "radiusBased":
-            const hueBasedOnRadius = ( (radius / maxRadius) * 360 + (phase * 500)) % 360;  // This will change hue based on the distance from the center
-            return `hsl(${hueBasedOnRadius}, 100%, 50%)`;
+            hue = ( (radius / maxRadius) * 360 + (phase * 500)) % 360;  // This will change hue based on the distance from the center
+            return `hsl(${hue}, 100%, 50%)`;
 
         case "offsetAndRadius":
             hue = (angle + angleOffset) * (colorChange + oscillationRange * Math.sin(phase + angle * frequency)) % 360;
@@ -97,13 +97,13 @@ function colorCalculator(angle, radius) {
             hue = (baseHue + (hue % hueRange)) % 360 
             return `hsl(${hue}, 100%, 50%)`;
 
-        case "grayscale":
-                const intensity = Math.abs(Math.sin(angle)) * 255;
-                return `rgb(${intensity}, ${intensity}, ${intensity})`;
+        case "grayscale_hsl":
+            lightness = Math.abs(Math.cos(radius)) * 100;
+            return `hsl(${baseHue}, 0%, ${lightness}%)`
         
         case "constantHue":
-            const saturation = Math.abs(Math.sin(angle)) * 100;
-            const lightness = Math.abs(Math.cos(radius)) * 50 + 50;
+            saturation = Math.abs(Math.sin(angle)) * 100;
+            lightness = Math.abs(Math.cos(radius)) * 50 + 50;
             return `hsl(${baseHue}, ${saturation}%, ${lightness}%)`;
                     
         default:  // This is the default method you provided
@@ -247,7 +247,6 @@ function drawDotForSpiral(radius, spiralNumber, colorCallback, dotIndex) {
     } else {
         drawShape(currentShape, x, y, dynamicDotSize, color, dotIndex);
     }
-    // drawShape(currentShape, x, y, dynamicDotSize, color, dotIndex)   
 }
 
 
