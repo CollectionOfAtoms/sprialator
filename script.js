@@ -9,8 +9,8 @@ canvas.height = window.innerHeight;
 
 let adjustingParameter = "none";  // Can be "none", "r0", or "k"
 
-const centerX = window.innerWidth / 2;
-const centerY = window.innerHeight / 2;
+let centerX = window.innerWidth / 2;
+let centerY = window.innerHeight / 2;
 const numMorphSteps = 200
 
 let autoAdjustParams = true;
@@ -65,7 +65,7 @@ let hueRange = 50; // The range within which the hue can vary. This will allow h
 
 let doDisplayControls = false // Whether or not the control display is visible
 
-const maxRadius = Math.sqrt(centerX * centerX + centerY * centerY);
+let maxRadius = Math.sqrt(centerX * centerX + centerY * centerY);
 let angleIncrement = -0.03;
 let radiusIncrement = 10;
 // Parameters for the sigmoid-like growth of the dot size
@@ -473,6 +473,20 @@ document.addEventListener('keydown', function(event) {
             break;
     }
 })
+
+window.addEventListener('resize', function() {
+    // Update canvas size
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  
+    // Update center point
+    centerX = canvas.width / 2;
+    centerY = canvas.height / 2;
+    maxRadius = Math.sqrt(centerX * centerX + centerY * centerY);
+  
+    // You might want to call a function to redraw your canvas here
+    // redraw(); // Assuming you have a function called redraw that handles drawing
+  });  
 
 function displayControls() {
     //Controls on the right 
