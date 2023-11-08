@@ -13,7 +13,7 @@ const centerX = window.innerWidth / 2;
 const centerY = window.innerHeight / 2;
 const numMorphSteps = 200
 
-let autoAdujstParams = true;
+let autoAdjustParams = true;
 let rotation = 0;
 let rotationSpeed = 0.003;
 let colorChange = 10;
@@ -52,12 +52,13 @@ const dotShapeMemory = {};
 let time = 0;                 // Variable to drive the oscillation
 let frequency = 0;            // Initial frequency of oscillation
 let oscillationRange = 100;   // Maximum oscillation value (positive and negative)
-let minDotSize = 30;  // Minimum dot size when radius is 0
+let minDotSize = 50;  // Minimum dot size when radius is 0
 let maxDotSize = 66; // Maximum dot size when radius is maxRadius
 let phase=0
 
 const colorModes = ["default", "offsetAngle", "offsetAndRadius", "radiusBased", "centerColor", "hueSliceByOffsetAndRadius", "grayscale_hsl", "constantHue"];
 let colorModeIndex = 3;  // global variable to track the current color mode
+let nextColorModeIndex = (colorModeIndex + 1) % colorModes.length; // next color mode index
 let colorMethod = colorModes[colorModeIndex];  // Initial setting
 let baseHue = 200; // A value between 0 and 360. For example, 200 is a blue hue.
 let hueRange = 50; // The range within which the hue can vary. This will allow hues between 175 and 225 in this example.
@@ -71,46 +72,86 @@ let radiusIncrement = 10;
 let r0 = 84.35;  // Adjust this for the inflection point of the curve
 let k = 0.034;    // Adjust this to make the transition smoother
 
+// Color transition parameters
+let transitionStartTime = null;
+const transitionDuration = 5000; // Transition duration in milliseconds
 
-function colorCalculator(angle, radius) {
+
+
+function calculateColorFromMode(mode, angle, radius) {
+    // Returns a 3 element array of the form [hue, saturation, lightness]
+    // 0 <= hue < 360
+    // saturation and lightness are percents
+
     const angleOffset = Math.PI / 4;  // Adjust as needed
     let hue, saturation, lightness
 
-    switch (colorMethod) {
+    switch (mode) {
         case "offsetAngle":
             hue = (angle + angleOffset) * (colorChange + oscillationRange * Math.sin(phase + angle * frequency)) % 360;
-            return `hsl(${hue}, 100%, 50%)`;
+            return [hue, 100, 50];
         
         case "radiusBased":
             hue = ( (radius / maxRadius) * 360 + (phase * 500)) % 360;  // This will change hue based on the distance from the center
-            return `hsl(${hue}, 100%, 50%)`;
+            return [hue, 100, 50];
 
         case "offsetAndRadius":
             hue = (angle + angleOffset) * (colorChange + oscillationRange * Math.sin(phase + angle * frequency)) % 360;
             hue = hue + ( (radius / maxRadius) * 360 + (phase * 500)) % 360;
             hue = hue % 360
-            return `hsl(${hue}, 100%, 50%)`;
+            return [hue, 100, 50];
 
         case "hueSliceByOffsetAndRadius":
             hue = (angle + angleOffset) * (colorChange + oscillationRange * Math.sin(phase + angle * frequency)) % 360;
             hue = hue + ( (radius / maxRadius) * 360 + (phase * 500)) % 360;
             hue = (baseHue + (hue % hueRange)) % 360 
-            return `hsl(${hue}, 100%, 50%)`;
+            return [hue, 100, 50];
 
         case "grayscale_hsl":
             lightness = Math.abs(Math.cos(radius)) * 100;
-            return `hsl(${baseHue}, 0%, ${lightness}%)`
+            return [baseHue,0,lightness]
         
         case "constantHue":
             saturation = Math.abs(Math.sin(angle)) * 100;
             lightness = Math.abs(Math.cos(radius)) * 50 + 50;
-            return `hsl(${baseHue}, ${saturation}%, ${lightness}%)`;
+            return [baseHue, saturation, lightness]
                     
         default:  // This is the default method you provided
             const hueDefault = angle * (colorChange + oscillationRange * Math.sin(phase + angle * frequency)) % 360;
-            return `hsl(${hueDefault}, 100%, 50%)`;
+            return [hueDefault,100, 50]
     }
 }
+
+function initiateColorTransition() {
+    // Start the transition
+    transitionStartTime = Date.now();
+    nextColorModeIndex = (colorModeIndex + 1) % colorModes.length; // Prepare the next color mode index
+  }
+  
+  function interpolateColor(color1, color2, fraction) {
+    // Simple linear interpolation between two colors
+    return color1.map((c1, i) => {
+      const c2 = color2[i];
+      return c1 + (c2 - c1) * fraction;
+    });
+  }
+  
+  function getColorDuringTransition(currentMode, nextMode, angle, radius) {
+    // Calculate the fraction of the transition that has completed
+    let fraction = (Date.now() - transitionStartTime) / transitionDuration;
+    if (fraction > 1) {
+      fraction = 1;
+      transitionStartTime = null; // End the transition
+      colorMethod = nextMode; // Update the color mode
+    }
+    // Get the color from the current and next modes
+    const colorFromCurrentMode = calculateColorFromMode(currentMode, angle, radius);
+    const colorFromNextMode = calculateColorFromMode(nextMode, angle, radius);
+    
+    // Interpolate between the two colors
+    return interpolateColor(colorFromCurrentMode, colorFromNextMode, fraction);
+  }
+
 
 function getShapeMorphSteps(startPathData, endPathData){
     // Returns an array with intermediate paths botween two SVG paths. 
@@ -215,7 +256,31 @@ function drawDotForSpiral(radius, spiralNumber, colorCallback, dotIndex) {
     
     const dynamicDotSize = minDotSize + (maxDotSize - minDotSize) / (1 + Math.exp(-k * (radius - r0)));
     
-    const color = colorCallback(angle, radius);
+    // Logic for determining a dot's color
+    let color
+    if (transitionStartTime !== null) {
+        // If a transition is active, calculate the transition fraction
+        let fraction = (Date.now() - transitionStartTime) / transitionDuration;
+        if (fraction >= 1) {
+          // Transition is complete
+          fraction = 1;
+          transitionStartTime = null;
+          colorModeIndex = nextColorModeIndex;
+          colorMethod = colorModes[nextColorModeIndex]; // Make sure to define nextColorModeIndex somewhere
+        }
+    
+        // Use the fraction to interpolate colors for the current frame
+        const currentColor = calculateColorFromMode(colorMethod, angle, radius);
+        const nextColor = calculateColorFromMode(colorModes[nextColorModeIndex], angle, radius);
+        color = interpolateColor(currentColor, nextColor, fraction);
+      } else {
+        // No transition active, draw normally
+        color = calculateColorFromMode(colorMethod, angle, radius);
+      }
+
+    colorString = `hsl(${color[0]},${color[1]}%,${color[2]}%)`
+
+
     
     // draw the given shape
 
@@ -243,9 +308,9 @@ function drawDotForSpiral(radius, spiralNumber, colorCallback, dotIndex) {
         const endAngle = extraRotation[endShape]
         shapeRotation = startAngle + (endAngle-startAngle)*(currentMorphState/numMorphSteps)
 
-        drawShapeFromPath(pathData, x, y, dynamicDotSize, color, shapeRotation);
+        drawShapeFromPath(pathData, x, y, dynamicDotSize, colorString, shapeRotation);
     } else {
-        drawShape(currentShape, x, y, dynamicDotSize, color, dotIndex);
+        drawShape(currentShape, x, y, dynamicDotSize, colorString, dotIndex);
     }
 }
 
@@ -260,7 +325,8 @@ function animate() {
     let dotIndex = 0;
     for (let radius = maxRadius; radius >= 0; radius -= radiusIncrement) {
         for (let i = 0; i < numSpirals; i++) {
-            drawDotForSpiral(radius, i, colorCalculator, dotIndex);
+
+            drawDotForSpiral(radius, i, calculateColorFromMode, dotIndex);
         }
         dotIndex++;
     }
@@ -280,9 +346,9 @@ function animate() {
     }
 
     // Change stuff to add intrigue
-    if( autoAdujstParams ){
+    if( autoAdjustParams ){
         r0 = 600 * ( Math.sin( time/17. ) ** 2 ) + 50
-        angleIncrement = .04 * Math.cos( time/20. ) 
+        angleIncrement = .027 * Math.cos( time/37. ) 
         radiusIncrement = 1 * ( Math.sin( time/25. ) ** 2 ) + 9;  // This dynamically adjusts the radiusIncrement over time
         // Modifying time to achieve the desired oscillation characteristic
         const timeModified = 2*Math.PI * (Math.cos(time/23) ** 2)  ;  // Adjust 0.05 to change the frequency of time oscillation
@@ -299,6 +365,11 @@ function animate() {
             for (let dotIndex in dotShapeMemory) {
                 dotShapeMemory[dotIndex].morphState = 0;
             }
+        }
+
+        if (time % 24 == 0){
+            nextColorModeIndex = (colorModeIndex + 1) % colorModes.length; // Prepare the next color mode index
+            initiateColorTransition(); // Start the transition
         }
 
     }
@@ -356,6 +427,9 @@ document.addEventListener('keydown', function(event) {
                 if (minDotSize < 1) {minDotSize=1} 
             }
             break;
+        case 'a':
+            autoAdjustParams = !autoAdjustParams
+            break;
         case 'h': 
             adjustingParameter = adjustingParameter === "h" ? "none" : "h";
             break;
@@ -378,8 +452,8 @@ document.addEventListener('keydown', function(event) {
             break;
         case 'c':
             // Increment the index, and wrap it if it exceeds the length of colorModes
-            colorModeIndex = (colorModeIndex + 1) % colorModes.length;
-            colorMethod = colorModes[colorModeIndex];
+            nextColorModeIndex = (colorModeIndex + 1) % colorModes.length; // Prepare the next color mode index
+            initiateColorTransition(); // Start the transition
             break;
         case 's':
             lastShape = currentShape;
@@ -444,7 +518,7 @@ function displayControls() {
     // display on the left 
     const readout = [
         `Adjusting: ${adjustingParameter}`,
-        `autoAdujstParams: ${autoAdujstParams}`,
+        `autoAdujstParams: ${autoAdjustParams}`,
         `rotation: ${rotation.toFixed(2)}`,
         `rotationSpeed: ${rotationSpeed.toFixed(2)}`,
         `colorChange: ${colorChange}`,
@@ -463,7 +537,7 @@ function displayControls() {
         `radiusIncrement: ${radiusIncrement.toFixed(2)}`,
         `r0: ${r0.toFixed(2)}`,
         `k: ${k.toFixed(2)}`,
-        `baseHue: ${baseHue}`,
+        `baseHue: ${baseHue.toFixed(2)}`,
         `hueRange: ${hueRange}`,
         `colorModeIndex: ${colorModeIndex}`,
         `colorMethod: ${colorMethod}`,
