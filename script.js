@@ -56,8 +56,8 @@ let minDotSize = 50;  // Minimum dot size when radius is 0
 let maxDotSize = 66; // Maximum dot size when radius is maxRadius
 let phase=0
 
-const colorModes = ["default", "offsetAngle", "offsetAndRadius", "radiusBased", "centerColor", "hueSliceByOffsetAndRadius", "grayscale_hsl", "constantHue"];
-let colorModeIndex = 3;  // global variable to track the current color mode
+const colorModes = ["default", "offsetAngle", "offsetAndRadius", "radiusBased", "hueSliceByOffsetAndRadius", "grayscale_hsl", "constantHue"];
+let colorModeIndex = 2;  // global variable to track the current color mode
 let nextColorModeIndex = (colorModeIndex + 1) % colorModes.length; // next color mode index
 let colorMethod = colorModes[colorModeIndex];  // Initial setting
 let baseHue = 200; // A value between 0 and 360. For example, 200 is a blue hue.
