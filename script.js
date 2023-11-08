@@ -348,7 +348,7 @@ function animate() {
     // Change stuff to add intrigue
     if( autoAdjustParams ){
         r0 = 600 * ( Math.sin( time/17. ) ** 2 ) + 50
-        angleIncrement = .027 * Math.cos( time/37. ) 
+        angleIncrement = .033 * Math.cos( time/37. ) 
         radiusIncrement = 1 * ( Math.sin( time/25. ) ** 2 ) + 9;  // This dynamically adjusts the radiusIncrement over time
         // Modifying time to achieve the desired oscillation characteristic
         const timeModified = 2*Math.PI * (Math.cos(time/23) ** 2)  ;  // Adjust 0.05 to change the frequency of time oscillation
