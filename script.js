@@ -15,7 +15,7 @@ const numMorphSteps = 200
 
 let autoAdjustParams = true;
 let rotation = 0;
-let rotationSpeed = 0.003;
+let rotationSpeed = .001;
 let colorChange = 10;
 let dotSize = 6;
 let numSpirals = 9;  // Default number of spirals
@@ -56,8 +56,15 @@ let minDotSize = 50;  // Minimum dot size when radius is 0
 let maxDotSize = 66; // Maximum dot size when radius is maxRadius
 let phase=0
 
-const colorModes = ["default", "offsetAngle", "offsetAndRadius", "radiusBased", "hueSliceByOffsetAndRadius", "grayscale_hsl", "constantHue"];
-let colorModeIndex = 2;  // global variable to track the current color mode
+const colorModes = ["default", 
+    "offsetAngle", 
+    "offsetAndRadius", 
+    "radiusBased", 
+    "hueSliceByOffsetAndRadius", 
+    "grayscale_hsl", 
+    "constantHue", 
+    "colorList"];
+let colorModeIndex = 7;  // global variable to track the current color mode
 let nextColorModeIndex = (colorModeIndex + 1) % colorModes.length; // next color mode index
 let colorMethod = colorModes[colorModeIndex];  // Initial setting
 let baseHue = 200; // A value between 0 and 360. For example, 200 is a blue hue.
@@ -115,11 +122,43 @@ function calculateColorFromMode(mode, angle, radius) {
             saturation = Math.abs(Math.sin(angle)) * 100;
             lightness = Math.abs(Math.cos(radius)) * 50 + 50;
             return [baseHue, saturation, lightness]
+
+        case "colorList":
+
+            const colorList = [
+                [42, 41, 45],
+                [35, 62, 48],
+                [128, 38, 32],
+                [54, 53, 51],
+                [0, 53, 38],
+                [360, 64, 25],
+                // [94, 82, 18]
+            ]
+
+            // Use the seeded random function to get a reproducible index
+            // const seed = radius * 1000 + angle;
+            const seed = radius * 1000;
+
+            const chosenColorIndex = Math.floor(seededRandom(colorList.length, seed));
+            // const chosenColorIndex = Math.floor( (Math.sin(angle) ** 2) * colorList.length )
+            let c = colorList[chosenColorIndex]
+            c[2] = Math.abs(Math.cos(radius)) * 50 + 5;
+            return c
+
                     
         default:  // This is the default method you provided
             const hueDefault = angle * (colorChange + oscillationRange * Math.sin(phase + angle * frequency)) % 360;
             return [hueDefault,100, 50]
     }
+}
+
+function seededRandom(max, seed) {
+    // A simple seeded PRNG (linear congruential generator specifically)
+    var a = 1664525;
+    var c = 1013904223;
+    var m = Math.pow(2, 32);
+    // Combine the seed and return a pseudo-random result
+    return (a * seed + c) % m / m * max;
 }
 
 function initiateColorTransition() {
@@ -250,7 +289,7 @@ function getRandomKey(obj) {
 function drawDotForSpiral(radius, spiralNumber, colorCallback, dotIndex) {
     const offset = 2 * Math.PI / numSpirals * spiralNumber;
     
-    const angle = radius * angleIncrement % (2 * Math.PI);
+    const angle = radius * angleIncrement % (2 * Math.PI) + rotation;
     const x = radius * Math.cos(angle + offset) + window.innerWidth / 2;  // Adjust for center
     const y = radius * Math.sin(angle + offset) + window.innerHeight / 2;  // Adjust for center
     
@@ -318,9 +357,7 @@ function drawDotForSpiral(radius, spiralNumber, colorCallback, dotIndex) {
 function animate() {
     svg.selectAll("*").remove();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.save();
-    ctx.translate(centerX, centerY);
-    ctx.rotate(rotation);
+    // svg.attr('transform', `rotate(${rotation} 0 0)`);
 
     let dotIndex = 0;
     for (let radius = maxRadius; radius >= 0; radius -= radiusIncrement) {
@@ -330,7 +367,6 @@ function animate() {
         }
         dotIndex++;
     }
-    ctx.restore();
     rotation += rotationSpeed;
     phase += 0.001;
     time += 0.0078125;  // Increment the time variable for the oscillation.  Use a power of 2 for full precisions floating point maths
@@ -380,7 +416,14 @@ function animate() {
 document.addEventListener('keydown', function(event) {
     const key = event.key.toLowerCase();
     
+    console.log(key)
     switch (key) {
+        case '+':
+            rotationSpeed += .0002
+            break;
+        case '-':
+            rotationSpeed -= .0002;
+            break;
         case 'arrowright':
             if(adjustingParameter === 'h'){
                 hueRange = Math.min(hueRange + 5, 360)
@@ -452,8 +495,17 @@ document.addEventListener('keydown', function(event) {
             break;
         case 'c':
             // Increment the index, and wrap it if it exceeds the length of colorModes
-            nextColorModeIndex = (colorModeIndex + 1) % colorModes.length; // Prepare the next color mode index
-            initiateColorTransition(); // Start the transition
+            if (!transitionStartTime) {
+                nextColorModeIndex = (colorModeIndex + 1) % colorModes.length; // Prepare the next color mode index
+                initiateColorTransition(); // Start the transition
+            }
+            else{ 
+                //If You are mid transition do a jump
+                transitionStartTime = null;
+                colorModeIndex = nextColorModeIndex;
+                colorMethod = colorModes[nextColorModeIndex];
+            }
+
             break;
         case 's':
             lastShape = currentShape;
@@ -501,8 +553,8 @@ function displayControls() {
         "When one of these is toggled arrow functions adjust that parameter",
         "Shift + ArrowUp: Increase max dot size",
         "Shift + ArrowDown: Decrease max dot size",
-        "NumpadAdd: Increase rotation speed",
-        "NumpadSubtract: Decrease rotation speed",
+        "+: Increase rotation speed",
+        "-: Decrease rotation speed",
         "1-9: Set number of spirals",
         "C/c: Change colorMethod",
         "S/s: Change shape",
@@ -534,7 +586,7 @@ function displayControls() {
         `Adjusting: ${adjustingParameter}`,
         `autoAdujstParams: ${autoAdjustParams}`,
         `rotation: ${rotation.toFixed(2)}`,
-        `rotationSpeed: ${rotationSpeed.toFixed(2)}`,
+        `rotationSpeed: ${rotationSpeed.toFixed(5)}`,
         `colorChange: ${colorChange}`,
         `dotSize: ${dotSize}`,
         `numSpirals: ${numSpirals}`,
