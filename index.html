@@ -1,35 +1,38 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta property="og:title" content="Sprialator" />
-    <meta property="og:description" content="Trippy In-Browser Visualizer" />
-    <meta property="og:image" content="https://raw.githubusercontent.com/CollectionOfAtoms/sprialator/main/Sprialator%20Promo.jpg" />
-    <meta property="og:url" content="https://collectionofatoms.github.io/sprialator/" />
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta property="og:title" content="Sprialator" />
+        <meta property="og:description" content="Trippy In-Browser Visualizer" />
+        <meta property="og:image" content="https://raw.githubusercontent.com/CollectionOfAtoms/sprialator/main/Sprialator%20Promo.jpg" />
+        <meta property="og:url" content="https://collectionofatoms.github.io/sprialator/" />
 
-    <title>Sprialator</title>
-    <style>
-        body, html {
-            height: 100%;
-            margin: 0;
-            overflow: hidden; /* Prevents scrollbars */
-        }
-        canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-        }
-    </style>
+        <title>Sprialator</title>
+        <style>
+            body, html {
+                height: 100%;
+                margin: 0;
+                overflow: hidden; /* Prevents scrollbars */
+            }
+            canvas {
+                position: absolute;
+                top: 0;
+                left: 0;
+            }
+        </style>
 
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-    <svg id="spiralSVG" ></svg>
-    <canvas id="mainCanvas"></canvas>
-    <canvas id="textCanvas"></canvas>
-    <script src="https://d3js.org/d3.v7.min.js"></script>
-    <script src="https://unpkg.com/d3-interpolate-path"></script>
-    <script src="script.js"></script>
-</body>
-</html>
+        <link rel="stylesheet" href="styles.css">
+    </head>
+    <body>
+        <div id="overlay"></div> <!-- Make sure this is above the SVG in the HTML -->
+        <svg id="spiralSVG" ></svg>
+        <canvas id="mainCanvas"></canvas>
+        <canvas id="textCanvas"></canvas>
+        <script src="https://d3js.org/d3.v7.min.js"></script>
+        <script src="https://unpkg.com/d3-interpolate-path"></script>
+        <script src="src/dissapearingMouse.js"></script>
+        <script src="src/listeners.js"></script>
+        <script src="src/script.js"></script>
+    </body>
+    </html>
