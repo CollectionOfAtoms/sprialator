@@ -30,7 +30,6 @@ const shape2Path = {
     'square' : `M 0 -0.5 L 0.5 -0.5 L 0.5 0 L 0.5 0.5 L 0 0.5 L -0.5 0.5 L -0.5 0 L -0.5 -0.5 Z`,
     'triangle' : `M -.5 .25 L 0 -.75 L .5 .25 L .3 .25 L .1 .25 L -.1 .25 L -.3 .25 L -.5 .25 Z`,
     'rhombus' : `M 0 -0.5 L 0.4 -0.25 L 0.8 0 L 0.4 0.25 L 0 0.5 L -0.4 0.25 L -0.8 0 L -0.4 -0.25 Z`,
-    // 'einstein' : "M -0.5,0.1989752348420153 L -1,0.6011955593509819 L -0.8341584158415842,0.9982920580700256 L -0.16584158415841577,0.9982920580700256 L 0.0006188118811880639,0.5977796754910332 L 0.49938118811881194,0.9999999999999998 L 1,0.6003415883859948 L 0.8347772277227723,0.1989752348420153 L 0.5006188118811883,0.1989752348420153 L 0.504950495049505,-0.5994876174210078 L 0,-1 L -0.16584158415841577,-0.5994876174210078 L -0.5,-0.5994876174210078 Z"
 };
 
  const extraRotation = {
@@ -38,7 +37,6 @@ const shape2Path = {
      'square' : 45,
      'triangle' : -90,
      'rhombus' : 0,
-    //  'einstein' : 0
  };
 
  const shapeMorphCombinations = getAllShapeMorphCombinations()
@@ -63,12 +61,20 @@ const colorModes = ["default",
     "hueSliceByOffsetAndRadius", 
     "grayscale_hsl", 
     "constantHue", 
-    "colorList"];
+    "palette"];
 let colorModeIndex = 7;  // global variable to track the current color mode
 let nextColorModeIndex = (colorModeIndex + 1) % colorModes.length; // next color mode index
 let colorMethod = colorModes[colorModeIndex];  // Initial setting
 let baseHue = 200; // A value between 0 and 360. For example, 200 is a blue hue.
 let hueRange = 50; // The range within which the hue can vary. This will allow hues between 175 and 225 in this example.
+
+currentPalette = 0
+let palettes = {
+    'rich earth' : [[42, 41, 45], [35, 62, 48],[128, 38, 32],[54, 53, 51],[0, 53, 38],[360, 64, 25]],
+    'rainbow zebra' : [[0,0,0], [360, 100, 100], [296, 88, 49], [126, 78, 26], [302, 91, 55], [202, 100, 53], [49, 84, 18]],
+    'purple rain': [[251, 98, 72 ], [252, 100, 63], [276, 100, 63], [205, 100, 63]]
+}
+
 
 let doDisplayControls = false // Whether or not the control display is visible
 
@@ -83,6 +89,8 @@ let k = 0.034;    // Adjust this to make the transition smoother
 let transitionStartTime = null;
 const transitionDuration = 5000; // Transition duration in milliseconds
 
+//Audio reactivity
+const defaultFrequencyData = new Uint8Array(256).fill(128); // A mid-range value for silence
 
 
 function calculateColorFromMode(mode, angle, radius) {
@@ -123,25 +131,17 @@ function calculateColorFromMode(mode, angle, radius) {
             lightness = Math.abs(Math.cos(radius)) * 50 + 50;
             return [baseHue, saturation, lightness]
 
-        case "colorList":
+        case "palette":
 
-            const colorList = [
-                [42, 41, 45],
-                [35, 62, 48],
-                [128, 38, 32],
-                [54, 53, 51],
-                [0, 53, 38],
-                [360, 64, 25],
-                // [94, 82, 18]
-            ]
+            palette = palettes[ Object.keys(palettes)[currentPalette] ]
 
             // Use the seeded random function to get a reproducible index
             // const seed = radius * 1000 + angle;
             const seed = radius * 1000;
 
-            const chosenColorIndex = Math.floor(seededRandom(colorList.length, seed));
+            const chosenColorIndex = Math.floor(seededRandom(palette.length, seed));
             // const chosenColorIndex = Math.floor( (Math.sin(angle) ** 2) * colorList.length )
-            let c = colorList[chosenColorIndex]
+            let c = palette[chosenColorIndex]
             c[2] = Math.abs(Math.cos(radius)) * 50 + 5;
             return c
 
@@ -480,7 +480,7 @@ function displayControls() {
         `hueRange: ${hueRange}`,
         `colorModeIndex: ${colorModeIndex}`,
         `colorMethod: ${colorMethod}`,
-        `doDisplayControls: ${doDisplayControls}`
+        `currentPalette: ${Object.keys(palettes)[currentPalette]}`
     ];
     
 

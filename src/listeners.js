@@ -61,7 +61,7 @@ document.addEventListener('keydown', function(event) {
         case 'h': 
             adjustingParameter = adjustingParameter === "h" ? "none" : "h";
             break;
-        case 'p':
+        case 'b':
             isBackgroundBlack = !isBackgroundBlack;
             if (isBackgroundBlack) {
                 document.body.style.backgroundColor = 'black';
@@ -69,6 +69,8 @@ document.addEventListener('keydown', function(event) {
                 document.body.style.backgroundColor = 'white';
             }
             break;
+        case 'p':
+            currentPalette = (currentPalette + 1) % Object.keys(palettes).length
         case 'r':
             adjustingParameter = adjustingParameter === "r0" ? "none" : "r0";
             break;
