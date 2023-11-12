@@ -1,127 +1,133 @@
+import { gs } from './state.js';
+import { palettes } from './palettes.js'
+
 document.addEventListener('keydown', function(event) {
     const key = event.key.toLowerCase();
     
     console.log(key)
     switch (key) {
         case '+':
-            rotationSpeed += .0002
+            gs.rotationSpeed += .0002
             break;
         case '-':
-            rotationSpeed -= .0002;
+            gs.rotationSpeed -= .0002;
             break;
         case 'arrowright':
-            if(adjustingParameter === 'h'){
-                hueRange = Math.min(hueRange + 5, 360)
+            if(gs.adjustingParameter === 'h'){
+                gs.hueRange = Math.min(gs.hueRange + 5, 360)
             }
             else{
-                frequency += 0.01;
+                gs.frequency += 0.01;
             }
             break;
         case 'arrowleft':
-            if(adjustingParameter === 'h'){
-                hueRange = Math.max(hueRange - 5, 10)
+            if(gs.adjustingParameter === 'h'){
+                gs.hueRange = Math.max(gs.hueRange - 5, 10)
             }else{
-                frequency = Math.max(0, frequency - 0.01);
+                gs.frequency = Math.max(0, gs.frequency - 0.01);
             }
             break;
         case 'arrowup':
             // Handle functionality for ArrowUp...
-            if (adjustingParameter === "r0") {
-                r0 += 5;
-            } else if (adjustingParameter === "k") {
-                k += 0.001;
-            }else if (adjustingParameter === "h"){
-                baseHue += 5;
-                baseHue = baseHue % 360
+            if (gs.adjustingParameter === "r0") {
+                gs.r0 += 5;
+            } else if (gs.adjustingParameter === "k") {
+                gs.k += 0.001;
+            }else if (gs.adjustingParameter === "h"){
+                gs.baseHue += 5;
+                gs.baseHue = baseHue % 360
             }else if (event.shiftKey) {
-                maxDotSize += 1;
+                gs.maxDotSize += 1;
             } else {
-                minDotSize += 1;
+                gs.minDotSize += 1;
             }
             break;
         case 'arrowdown':
-            if (adjustingParameter === "r0") {
-                r0 -= 5;
-            } else if (adjustingParameter === "k") {
-                k -= 0.001;
-            }else if (adjustingParameter === "h"){
-                baseHue -= 5;
-                baseHue = baseHue % 360
+            if (gs.adjustingParameter === "r0") {
+                gs.r0 -= 5;
+            } else if (gs.adjustingParameter === "k") {
+                gs.k -= 0.001;
+            }else if (gs.adjustingParameter === "h"){
+                gs.baseHue -= 5;
+                gs.baseHue = gs.baseHue % 360
             }else if (event.shiftKey) {
-                maxDotSize -= 1;
-                if (maxDotSize < 1) {maxDotSize=1} 
+                gs.maxDotSize -= 1;
+                if (gs.maxDotSize < 1) {gs.maxDotSize=1} 
             } else {
-                minDotSize -= 1;
-                if (minDotSize < 1) {minDotSize=1} 
+                gs.minDotSize -= 1;
+                if (gs.minDotSize < 1) {gs.minDotSize=1} 
             }
             break;
         case 'a':
-            autoAdjustParams = !autoAdjustParams
+            gs.autoAdjustParams = !gs.autoAdjustParams
             break;
         case 'h': 
-            adjustingParameter = adjustingParameter === "h" ? "none" : "h";
+            gs.adjustingParameter = gs.adjustingParameter === "h" ? "none" : "h";
             break;
         case 'b':
-            isBackgroundBlack = !isBackgroundBlack;
-            if (isBackgroundBlack) {
+            gs.isBackgroundBlack = !gs.isBackgroundBlack;
+            if (gs.isBackgroundBlack) {
                 document.body.style.backgroundColor = 'black';
             } else {
                 document.body.style.backgroundColor = 'white';
             }
             break;
         case 'p':
-            currentPalette = (currentPalette + 1) % Object.keys(palettes).length
+            gs.currentPalette = (gs.currentPalette + 1) % Object.keys(palettes).length
         case 'r':
-            adjustingParameter = adjustingParameter === "r0" ? "none" : "r0";
+            gs.adjustingParameter =gs.adjustingParameter === "r0" ? "none" : "r0";
             break;
         case 'k':
-            adjustingParameter = adjustingParameter === "k" ? "none" : "k";
+            gs.adjustingParameter = gs.adjustingParameter === "k" ? "none" : "k";
             break;
         case ' ':
-            doDisplayControls = !doDisplayControls 
+            gs.doDisplayControls = !gs.doDisplayControls 
             break;
         case 'c':
             // Increment the index, and wrap it if it exceeds the length of colorModes
-            if (!transitionStartTime) {
-                nextColorModeIndex = (colorModeIndex + 1) % colorModes.length; // Prepare the next color mode index
-                initiateColorTransition(); // Start the transition
+            if (!gs.transitionStartTime) {
+                // gs.nextColorModeIndex = (gs.colorModeIndex + 1) % gs.colorModes.length; // Prepare the next color mode index
+                gs.transitionStartTime = Date.now();
+                gs.nextColorModeIndex = (gs.colorModeIndex + 1) % gs.colorModes.length; // Prepare the next color mode index
             }
             else{ 
                 //If You are mid transition do a jump
-                transitionStartTime = null;
-                colorModeIndex = nextColorModeIndex;
-                colorMethod = colorModes[nextColorModeIndex];
+                gs.transitionStartTime = null;
+                gs.colorModeIndex = gs.nextColorModeIndex;
+                gs.colorMethod = gs.colorModes[gs.nextColorModeIndex];
             }
 
             break;
         case 's':
-            lastShape = currentShape;
-            currentShapeIndex = (currentShapeIndex + 1) % shapes.length;  
-            currentShape = shapes[currentShapeIndex];
+            gs.lastShape = gs.currentShape;
+            gs.currentShapeIndex = (gs.currentShapeIndex + 1) % gs.shapes.length;  
+            gs.currentShape = gs.shapes[gs.currentShapeIndex];
         
             // Reset dotShapeMemory for all dots
-            for (let dotIndex in dotShapeMemory) {
-                dotShapeMemory[dotIndex].morphState = 0;
+            for (let dotIndex in gs.dotShapeMemory) {
+                gs.dotShapeMemory[dotIndex].morphState = 0;
             }
             break;
         default:
             const numKey = key;
             if (numKey >= '1' && numKey <= '9') {
-                numSpirals = parseInt(numKey, 10);
+                gs.numSpirals = parseInt(numKey, 10);
             }
+
             break;
     }
 })
 
 window.addEventListener('resize', function() {
     // Update canvas size
+    const canvas = document.getElementById('textCanvas');
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
   
     // Update center point
-    centerX = canvas.width / 2;
-    centerY = canvas.height / 2;
-    maxRadius = Math.sqrt(centerX * centerX + centerY * centerY);
+    gs.centerX = canvas.width / 2;
+    gs.centerY = canvas.height / 2;
+    gs.maxRadius = Math.sqrt(gs.centerX ** 2 + gs.centerY ** 2 );
   
     // You might want to call a function to redraw your canvas here
     // redraw(); // Assuming you have a function called redraw that handles drawing
