@@ -46,7 +46,7 @@ let gs={
     hueRange: 50,  //Width of hue slice 
 
     currentPalette: 0,
-    doDisplayControls: true, // Whether or not the control display is visible
+    doDisplayControls: false, // Whether or not the control display is visible
     angleIncrement: -0.03,
     radiusIncrement: 10,
     r0: 84.35, // Adjust this for the inflection point of the curve
