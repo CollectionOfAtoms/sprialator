@@ -328,7 +328,7 @@ function animate() {
         }
 
         if (gs.time % 24 == 0){
-            gs.nextColorModeIndex = (gs.colorModeIndex + 1) % colorModes.length; // Prepare the next color mode index
+            gs.nextColorModeIndex = (gs.colorModeIndex + 1) % gs.colorModes.length; // Prepare the next color mode index
             initiateColorTransition(); // Start the transition
         }
 
