@@ -1,3 +1,5 @@
+import { palettes } from './palettes.js';
+
 //gs = global state, abbreviated for ease 
 let gs={
 
@@ -59,7 +61,8 @@ let gs={
 function initializeValues(){
     gs.currentShape = gs.shapes[gs.currentShapeIndex] // Depends on 'shapes' and 'currentShapeIndex'
     gs.lastShape = gs.shapes[gs.currentShapeIndex] // Depends on 'shapes' and 'currentShapeIndex'
-    gs.nextColorModeIndex = (gs.colorModeIndex + 1) % gs.colorModes.length;
+    gs.nextColorModeIndex = (gs.colorModeIndex)
+    gs.nextPalette = (gs.currentPalette);
     gs.colorMethod = gs.colorModes[gs.colorModeIndex];
     gs.maxRadius = Math.sqrt(gs.centerX ** 2 + gs.centerY ** 2)
 }

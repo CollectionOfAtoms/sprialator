@@ -6,6 +6,9 @@ document.addEventListener('keydown', function(event) {
     
     console.log(key)
     switch (key) {
+        case ' ':
+            gs.doDisplayControls = !gs.doDisplayControls 
+            break;
         case '+':
             gs.rotationSpeed += .0002
             break;
@@ -61,9 +64,6 @@ document.addEventListener('keydown', function(event) {
         case 'a':
             gs.autoAdjustParams = !gs.autoAdjustParams
             break;
-        case 'h': 
-            gs.adjustingParameter = gs.adjustingParameter === "h" ? "none" : "h";
-            break;
         case 'b':
             gs.isBackgroundBlack = !gs.isBackgroundBlack;
             if (gs.isBackgroundBlack) {
@@ -71,17 +71,6 @@ document.addEventListener('keydown', function(event) {
             } else {
                 document.body.style.backgroundColor = 'white';
             }
-            break;
-        case 'p':
-            gs.currentPalette = (gs.currentPalette + 1) % Object.keys(palettes).length
-        case 'r':
-            gs.adjustingParameter =gs.adjustingParameter === "r0" ? "none" : "r0";
-            break;
-        case 'k':
-            gs.adjustingParameter = gs.adjustingParameter === "k" ? "none" : "k";
-            break;
-        case ' ':
-            gs.doDisplayControls = !gs.doDisplayControls 
             break;
         case 'c':
             // Increment the index, and wrap it if it exceeds the length of colorModes
@@ -97,6 +86,25 @@ document.addEventListener('keydown', function(event) {
                 gs.colorMethod = gs.colorModes[gs.nextColorModeIndex];
             }
 
+            break;
+        case 'h': 
+            gs.adjustingParameter = gs.adjustingParameter === "h" ? "none" : "h";
+            break;
+        case 'k':
+            gs.adjustingParameter = gs.adjustingParameter === "k" ? "none" : "k";
+            break;
+        case 'p':
+            if (!gs.transitionStartTime) {
+                gs.transitionStartTime = Date.now();
+                gs.nextPalette = (gs.currentPalette + 1) % Object.keys(palettes).length
+            }
+            else{  //Double tap p to cycle between palettes without transition
+                gs.transitionStartTime = null;
+                gs.currentPalette = gs.nextPalette
+            }
+            break;
+        case 'r':
+            gs.adjustingParameter =gs.adjustingParameter === "r0" ? "none" : "r0";
             break;
         case 's':
             gs.lastShape = gs.currentShape;

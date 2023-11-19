@@ -18,7 +18,7 @@ const shapeMorphCombinations = getAllShapeMorphCombinations() // Assuming this f
 
 
 
-const calculateColorFromMode = function(mode, angle, radius) {
+const calculateColorFromMode = function(mode, palette, angle, radius) {
     // Returns a 3 element array of the form [hue, saturation, lightness]
     // 0 <= hue < 360
     // saturation and lightness are percents
@@ -57,9 +57,6 @@ const calculateColorFromMode = function(mode, angle, radius) {
             return [gs.baseHue, saturation, lightness]
 
         case "palette":
-
-            const palette = palettes[ Object.keys(palettes)[gs.currentPalette] ]
-
             // Use the seeded random function to get a reproducible index
             // const seed = radius * 1000 + angle;
             const seed = radius * 1000;
@@ -67,7 +64,7 @@ const calculateColorFromMode = function(mode, angle, radius) {
             const chosenColorIndex = Math.floor(seededRandom(palette.length, seed));
             // const chosenColorIndex = Math.floor( (Math.sin(angle) ** 2) * colorList.length )
             let c = palette[chosenColorIndex]
-            c[2] = Math.abs(Math.cos(radius)) * 50 + 5;
+            c[2] = Math.abs(Math.cos(radius)) * 50 + 5; // Oscillate the lightness as a function of radius
             return c
 
                     
@@ -93,29 +90,12 @@ function initiateColorTransition() {
 }
   
 function interpolateColor(color1, color2, fraction) {
-// Simple linear interpolation between two colors
-return color1.map((c1, i) => {
-    const c2 = color2[i];
-    return c1 + (c2 - c1) * fraction;
-});
+    // Simple linear interpolation between two colors
+    return color1.map((c1, i) => {
+        const c2 = color2[i];
+        return c1 + (c2 - c1) * fraction;
+    });
 }
-  
-function getColorDuringTransition(currentMode, nextMode, angle, radius) {
-// Calculate the fraction of the transition that has completed
-let fraction = (Date.now() - gs.transitionStartTime) / gs.transitionDuration;
-if (fraction > 1) {
-    fraction = 1;
-    gs.transitionStartTime = null; // End the transition
-    gs.colorMethod = nextMode; // Update the color mode
-}
-// Get the color from the current and next modes
-const colorFromCurrentMode = calculateColorFromMode(currentMode, angle, radius);
-const colorFromNextMode = calculateColorFromMode(nextMode, angle, radius);
-
-// Interpolate between the two colors
-return interpolateColor(colorFromCurrentMode, colorFromNextMode, fraction);
-}
-
 
 function getShapeMorphSteps(startPathData, endPathData){
     // Returns an array with intermediate paths botween two SVG paths. 
@@ -231,15 +211,22 @@ function drawDotForSpiral(radius, spiralNumber, dotIndex) {
           gs.transitionStartTime = null;
           gs.colorModeIndex = gs.nextColorModeIndex;
           gs.colorMethod = gs.colorModes[gs.nextColorModeIndex]; // Make sure to define nextColorModeIndex somewhere
+          gs.currentPalette = gs.nextPalette
         }
     
         // Use the fraction to interpolate colors for the current frame
-        const currentColor = calculateColorFromMode(gs.colorMethod, angle, radius);
-        const nextColor = calculateColorFromMode(gs.colorModes[gs.nextColorModeIndex], angle, radius);
+        let currentPalette = palettes[ Object.keys(palettes)[gs.currentPalette] ]
+        let nextPalette = palettes[ Object.keys(palettes)[gs.nextPalette] ]
+        let currentColorMethod = gs.colorMethod
+        let nextColorMethod = gs.colorModes[gs.nextColorModeIndex]
+
+        const currentColor = calculateColorFromMode(currentColorMethod, currentPalette, angle, radius);
+        const nextColor = calculateColorFromMode(nextColorMethod, nextPalette, angle, radius);
         color = interpolateColor(currentColor, nextColor, fraction);
       } else {
         // No transition active, draw normally
-        color = calculateColorFromMode(gs.colorMethod, angle, radius);
+        let palette = palettes[ Object.keys(palettes)[gs.currentPalette] ]
+        color = calculateColorFromMode(gs.colorMethod, palette, angle, radius);
       }
 
     const colorString = `hsl(${color[0]},${color[1]}%,${color[2]}%)`
