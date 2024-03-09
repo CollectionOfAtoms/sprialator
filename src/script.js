@@ -85,8 +85,17 @@ function seededRandom(max, seed) {
 
 function initiateColorTransition() {
     // Start the transition
+    console.log('initiating color transition...')
     gs.transitionStartTime = Date.now();
-    gs.nextColorModeIndex = (gs.colorModeIndex + 1) % gs.colorModes.length; // Prepare the next color mode index
+
+    if(gs.colorMethod == 'palette'){
+        console.log('changing palettes..')
+        gs.nextPalette = (gs.currentPalette + 1) % Object.keys(palettes).length
+    }
+    else{
+        console.log('canging color mode...')
+        gs.nextColorModeIndex = (gs.colorModeIndex + 1) % gs.colorModes.length; // Prepare the next color mode index
+    }
 }
   
 function interpolateColor(color1, color2, fraction) {
@@ -155,8 +164,6 @@ function drawShape(shapeName, x, y, scale, color, dotIndex) {
         pathData = gs.shape2Path[shapeName];
         rotationAngle = angleToCenter + gs.extraRotation[shapeName]
     }
-
-    // rotationAngle = 50
 
     svg.append("path")
         .attr("d", pathData)
@@ -230,11 +237,8 @@ function drawDotForSpiral(radius, spiralNumber, dotIndex) {
       }
 
     const colorString = `hsl(${color[0]},${color[1]}%,${color[2]}%)`
-
-
     
     // draw the given shape
-
     if (gs.dotShapeMemory[dotIndex]) {
         const currentMorphState = gs.dotShapeMemory[dotIndex].morphState;
         
@@ -303,7 +307,7 @@ function animate() {
         gs.baseHue = ((gs.baseHue) + .1) % 360
 
         // Auto change shapes
-        if (gs.time % 16 == 0){
+        if (gs.time % 12 == 0){
             gs.lastShape = gs.currentShape;
             gs.currentShapeIndex = (gs.currentShapeIndex + 1) % gs.shapes.length;  
             gs.currentShape = gs.shapes[gs.currentShapeIndex];
@@ -314,13 +318,11 @@ function animate() {
             }
         }
 
-        if (gs.time % 24 == 0){
-            gs.nextColorModeIndex = (gs.colorModeIndex + 1) % gs.colorModes.length; // Prepare the next color mode index
+        // Auto change colors
+        if (gs.time % 8 == 0){
             initiateColorTransition(); // Start the transition
         }
-
     }
-
     requestAnimationFrame(animate);
 }
 
