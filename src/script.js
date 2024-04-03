@@ -1,6 +1,7 @@
 //Imports
 import { palettes } from './palettes.js';
 import { gs } from './state.js';
+import { scalePathToFit } from './utilities/scalePathToFit.js';
 
 
 
@@ -118,24 +119,126 @@ function getShapeMorphSteps(startPathData, endPathData){
     return morphingSteps
 }  
 
+function getTween(tweenElementSelector, startPathData, endPathData, duration = 1000){
+    // Returns the KUTE tween object between the paths
+    
+    // console.log('startPathData:', startPathData), 
+    // console.log('endPathData:', endPathData)
+    
+    const tween = KUTE.fromTo(`${tweenElementSelector}-start`,
+                                {path: `${tweenElementSelector}-start`}, 
+                                {path: `${tweenElementSelector}-end`},
+                                {duration: duration, yoyo: false, repeat: 0})
+
+    return tween
+}
+
+function getMorphStepsFromTween(tween, numMorphSteps, tweenElementId, duration=1000){
+    var stepNum = 1
+    const morphSteps = []
+
+    while (stepNum <= numMorphSteps){
+        const progress = stepNum/(numMorphSteps-60)  // Why -60?  Because it doesn't completely morph without progress over 1 1/3 for some reason 
+        tween.update(progress * duration)
+        var currentPathData = document.getElementById(`${tweenElementId}-start`).getAttribute('d');
+        morphSteps.push(currentPathData)
+
+        stepNum++
+    }
+
+    return morphSteps
+}
+
 function getAllShapeMorphCombinations(){
     const shapeCombinations = {};
+    const tweenShapeCombinations = {};
+    const tweens = {};
 
     const shapeNames = Object.keys(gs.shape2Path);
 
     // Iterate through each combination of start and end shapes
     for (let startShape of shapeNames) {
         shapeCombinations[startShape] = {};  // Initialize an inner object for the start shape
+        tweenShapeCombinations[startShape] = {};
+        tweens[startShape] = {};
         for (let endShape of shapeNames) {
             // Avoid morphing a shape to itself
-            const startPathData = gs.shape2Path[startShape];
-            const endPathData = gs.shape2Path[endShape];
+            const startPathData = (gs.shape2Path[startShape]);
+            const endPathData = (gs.shape2Path[endShape]);
+
+            console.log(startPathData, startPathData) //DIAG
+            console.log(endPathData, endPathData) //DIAG
+
             const intermediateShapes = getShapeMorphSteps(startPathData, endPathData);
             shapeCombinations[startShape][endShape] = intermediateShapes;
+
+            const tweenElementId = `${startShape}-${endShape}`
+            const tweenElementSelector = `#${tweenElementId}`
+            console.log(tweenElementId)
+            console.log(document.getElementById(tweenElementId));
+            ensureSvgElementExists(tweenElementId, startPathData, endPathData)
+            console.log(document.getElementById(tweenElementId));
+            const tween = getTween(tweenElementSelector, startPathData, endPathData)
+            tween.start()
+            tween.pause()
+            tweens[startShape][endShape] = tween
+
+            if (startShape == endShape){
+                const degenerateMorphSteps = Array(gs.numMorphSteps).fill(startPathData);
+                tweenShapeCombinations[startShape][endShape] = degenerateMorphSteps
+            }
+            else{
+                const tweenMorphSteps = getMorphStepsFromTween(tween, gs.numMorphSteps, tweenElementId)
+                tweenShapeCombinations[startShape][endShape] = tweenMorphSteps
+            }
         }
     }
 
-    return shapeCombinations
+    console.log('tweens', tweens)
+    console.log('tweenShapeCombinations', tweenShapeCombinations)
+    return tweenShapeCombinations
+}
+
+function ensureSvgElementExists(tweenElementId, startPathData, endPathData, parentSelector = 'body') {
+    
+    // Check if the SVG element already exists
+    let svgElement = document.getElementById(tweenElementId);
+    if (!svgElement) {
+        console.log('Could not locate element by ID:', tweenElementId)
+        // If it doesn't exist, create it
+        svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        svgElement.setAttribute('id', tweenElementId);
+     
+        // Create the first path element
+        const startPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        startPath.setAttribute("id", `${tweenElementId}-start`);
+        startPath.setAttribute("style", "visibility:hidden")
+        startPath.setAttribute("d", startPathData);
+
+        const endPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        endPath.setAttribute("id", `${tweenElementId}-end`);
+        startPath.setAttribute("style", "visibility:hidden")
+        endPath.setAttribute("d", endPathData); 
+
+        svgElement.appendChild(startPath)
+        svgElement.appendChild(endPath)
+
+        // Append the newly created SVG to a parent element, default is 'body'
+        const parentElement = document.querySelector(parentSelector);
+        if (!parentElement) {
+            console.error(`Parent element '${parentSelector}' not found.`);
+            return null;
+        }
+
+        // Assuming a wrapper SVG exists or is also dynamically created
+        let svgWrapper = parentElement.querySelector('svg');
+        if (!svgWrapper) {
+            svgWrapper = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            parentElement.appendChild(svgWrapper);
+        }
+        svgWrapper.appendChild(svgElement);
+    }
+    return svgElement;
 }
 
 function drawShape(shapeName, x, y, scale, color, dotIndex) {

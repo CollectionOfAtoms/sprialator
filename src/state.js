@@ -17,12 +17,13 @@ let gs={
     isBackgroundBlack: true, // default to black
     currentShapeIndex: 2, // index of shape type to default
     
-    shapes : ["circle", "square", "triangle", "rhombus", "random"],
+    shapes : ["circle", "square", "triangle", "rhombus", "star", "random"],
     shape2Path: {
         'circle': `M 0 -0.5 L 0.35 -0.35 L 0.5 0 L 0.35 0.35 L 0 0.5 L -0.35 0.35 L -0.5 0 L -0.35 -0.35 Z`,
         'square': `M 0 -0.5 L 0.5 -0.5 L 0.5 0 L 0.5 0.5 L 0 0.5 L -0.5 0.5 L -0.5 0 L -0.5 -0.5 Z`,
         'triangle': `M -.5 .25 L 0 -.75 L .5 .25 L .3 .25 L .1 .25 L -.1 .25 L -.3 .25 L -.5 .25 Z`,
         'rhombus': `M 0 -0.5 L 0.4 -0.25 L 0.8 0 L 0.4 0.25 L 0 0.5 L -0.4 0.25 L -0.8 0 L -0.4 -0.25 Z`,
+        'star': 'M301.113,12.011l99.25,179.996l201.864,38.778L461.706,380.808l25.508,203.958l-186.101-87.287L115.01,584.766l25.507-203.958L0,230.785l201.86-38.778L301.113,12.011'
     },
 
     extraRotation: {
@@ -30,6 +31,7 @@ let gs={
         'square': 45,
         'triangle': -90,
         'rhombus': 0,
+        'star':0
     },
 
     dotShapeMemory: {},
