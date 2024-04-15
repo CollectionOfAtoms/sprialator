@@ -1,7 +1,6 @@
 //Imports
 import { palettes } from './palettes.js';
 import { gs } from './state.js';
-import { scalePathToFit } from './utilities/scalePathToFit.js';
 
 
 
@@ -107,18 +106,6 @@ function interpolateColor(color1, color2, fraction) {
     });
 }
 
-function getShapeMorphSteps(startPathData, endPathData){
-    // Returns an array with intermediate paths botween two SVG paths. 
-
-    const interpolator = d3.interpolatePath(startPathData, endPathData);
-
-    const morphingSteps = Array.from({ length: gs.numMorphSteps }, (_, i) => {
-        return interpolator(i / (gs.numMorphSteps - 1));
-    });
-
-    return morphingSteps
-}  
-
 function getTween(tweenElementSelector, startPathData, endPathData, duration = 1000){
     // Returns the KUTE tween object between the paths
     
@@ -138,7 +125,7 @@ function getMorphStepsFromTween(tween, numMorphSteps, tweenElementId, duration=1
     const morphSteps = []
 
     while (stepNum <= numMorphSteps){
-        const progress = stepNum/(numMorphSteps-60)  // Why -60?  Because it doesn't completely morph without progress over 1 1/3 for some reason 
+        const progress = stepNum/(numMorphSteps-150)  // Why -100?  Because it doesn't completely morph without progress over 1 1/3 for some reason 
         tween.update(progress * duration)
         var currentPathData = document.getElementById(`${tweenElementId}-start`).getAttribute('d');
         morphSteps.push(currentPathData)
@@ -150,7 +137,6 @@ function getMorphStepsFromTween(tween, numMorphSteps, tweenElementId, duration=1
 }
 
 function getAllShapeMorphCombinations(){
-    const shapeCombinations = {};
     const tweenShapeCombinations = {};
     const tweens = {};
 
@@ -158,19 +144,12 @@ function getAllShapeMorphCombinations(){
 
     // Iterate through each combination of start and end shapes
     for (let startShape of shapeNames) {
-        shapeCombinations[startShape] = {};  // Initialize an inner object for the start shape
         tweenShapeCombinations[startShape] = {};
         tweens[startShape] = {};
         for (let endShape of shapeNames) {
             // Avoid morphing a shape to itself
             const startPathData = (gs.shape2Path[startShape]);
             const endPathData = (gs.shape2Path[endShape]);
-
-            console.log(startPathData, startPathData) //DIAG
-            console.log(endPathData, endPathData) //DIAG
-
-            const intermediateShapes = getShapeMorphSteps(startPathData, endPathData);
-            shapeCombinations[startShape][endShape] = intermediateShapes;
 
             const tweenElementId = `${startShape}-${endShape}`
             const tweenElementSelector = `#${tweenElementId}`
