@@ -1,4 +1,8 @@
 import {parseSvgPath} from './parseSvgPath.js'
+function isNumber(value) {
+    return typeof value === 'number';
+}
+
 /**
  * 
  * @param {String} pathString 
@@ -28,6 +32,22 @@ function scalePathString(pathString, maxDimension=1) {
             case 'l': 
                 xValues.push(command[1])
                 yValues.push(command[2])
+            case 'C': 
+                isNumber(command[1]) ? xValues.push(command[1]) : null;
+                isNumber(command[2]) ? yValues.push(command[2]) : null;
+                isNumber(command[3]) ? xValues.push(command[3]) : null;
+                isNumber(command[4]) ? yValues.push(command[4]) : null;
+                isNumber(command[5]) ? xValues.push(command[5]) : null;
+                isNumber(command[6]) ? yValues.push(command[6]) : null;
+            case 'H':
+                isNumber(command[1]) ? xValues.push(command[1]) : null;
+            case 'V':
+                isNumber(command[1]) ? yValues.push(command[1]) : null;
+            case 'S':
+                isNumber(command[1]) ? xValues.push(command[1]) : null;
+                isNumber(command[2]) ? yValues.push(command[2]) : null;
+                isNumber(command[3]) ? xValues.push(command[3]) : null;
+                isNumber(command[4]) ? yValues.push(command[4]) : null;
         }
     }
 
@@ -37,6 +57,8 @@ function scalePathString(pathString, maxDimension=1) {
     let minY = Math.min(...yValues);
     let maxY = Math.max(...yValues);
 
+    console.log('xValues', xValues );
+    console.log('yValues', yValues );
     // Determine scale based on the largest range in x or y to fit within [-0.5, 0.5]
     let rangeX = maxX - minX;
     let rangeY = maxY - minY;
@@ -113,5 +135,9 @@ function scalePathString(pathString, maxDimension=1) {
     
     return newPathString;
 }
+
+function isNumber(value) {
+    return typeof value === 'number';
+  }
 
 export {scalePathString}

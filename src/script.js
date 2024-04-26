@@ -115,17 +115,22 @@ function getTween(tweenElementSelector, startPathData, endPathData, duration = 1
     const tween = KUTE.fromTo(`${tweenElementSelector}-start`,
                                 {path: `${tweenElementSelector}-start`}, 
                                 {path: `${tweenElementSelector}-end`},
-                                {duration: duration, yoyo: false, repeat: 0})
+                                {
+                                    easing: 'easingCubicInOut', 
+                                    duration: duration, 
+                                    yoyo: false, 
+                                    repeat: 0
+                                })
 
     return tween
 }
 
-function getMorphStepsFromTween(tween, numMorphSteps, tweenElementId, duration=1000){
+function getMorphStepsFromTween(tween, numMorphSteps, tweenElementId, duration=1000.){
     var stepNum = 1
     const morphSteps = []
 
     while (stepNum <= numMorphSteps){
-        const progress = stepNum/(numMorphSteps-150)  // Why -100?  Because it doesn't completely morph without progress over 1 1/3 for some reason 
+        const progress = stepNum/(numMorphSteps/3)  // Why -100?  Because it doesn't completely morph without progress over 1 1/3 for some reason 
         tween.update(progress * duration)
         var currentPathData = document.getElementById(`${tweenElementId}-start`).getAttribute('d');
         morphSteps.push(currentPathData)
