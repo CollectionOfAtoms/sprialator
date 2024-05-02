@@ -1,4 +1,5 @@
 import {parseSvgPath} from './parseSvgPath.js'
+
 function isNumber(value) {
     return typeof value === 'number';
 }
@@ -136,8 +137,6 @@ function scalePathString(pathString, maxDimension=1) {
     return newPathString;
 }
 
-function isNumber(value) {
-    return typeof value === 'number';
-  }
+
 
 export {scalePathString}

@@ -18,13 +18,11 @@ const palettes = {
         [0, 0, 99.61]
       ],
       'flamingoes dream':[
-        [330, 100, 50],  // A vibrant pink
-        [310, 75, 65],   // A softer pink
-        [320, 50, 75],   // A very light pink
-        [340, 85, 55],   // A deep pink
-        [315, 60, 80],    // A pastel pink
-        [310, 75, 95],
-        [320, 85, 95]
+        [295, 85, 87],  
+        [295, 66, 89],   // A softer pink
+        [295, 48, 92],   // A very light pink
+        [295, 54, 69],   // A deep pink
+        [311, 85, 87],    // A pastel pink
       ],
       'sunset at telescope peak':[
         [349, 67, 5],   // Licorice
@@ -37,7 +35,7 @@ const palettes = {
         [341, 40, 48],  // Raspberry rose
         [27, 81, 64],   // Sandy brown
         [41, 99, 59]    // Selective yellow
-      ]
+      ],
 }
 
 export {palettes}
