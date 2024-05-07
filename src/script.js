@@ -88,12 +88,13 @@ function initiateColorTransition() {
     console.log('initiating color transition...')
     gs.transitionStartTime = Date.now();
 
-    if(gs.colorMethod == 'palette'){
+    if(gs.colorMethod == 'palette' & gs.nextPalette != 0){
         console.log('changing palettes..')
         gs.nextPalette = (gs.currentPalette + 1) % Object.keys(palettes).length
     }
     else{
-        console.log('canging color mode...')
+        console.log('changing color mode...')
+        gs.currentPalette = gs.nextPalette
         gs.nextColorModeIndex = (gs.colorModeIndex + 1) % gs.colorModes.length; // Prepare the next color mode index
     }
 }
@@ -152,26 +153,24 @@ function getAllShapeMorphCombinations(){
         tweenShapeCombinations[startShape] = {};
         tweens[startShape] = {};
         for (let endShape of shapeNames) {
-            // Avoid morphing a shape to itself
             const startPathData = (gs.shape2Path[startShape]);
             const endPathData = (gs.shape2Path[endShape]);
-
-            const tweenElementId = `${startShape}-${endShape}`
-            const tweenElementSelector = `#${tweenElementId}`
-            console.log(tweenElementId)
-            console.log(document.getElementById(tweenElementId));
-            ensureSvgElementExists(tweenElementId, startPathData, endPathData)
-            console.log(document.getElementById(tweenElementId));
-            const tween = getTween(tweenElementSelector, startPathData, endPathData)
-            tween.start()
-            tween.pause()
-            tweens[startShape][endShape] = tween
-
+            
+            // Avoid morphing a shape to itself
             if (startShape == endShape){
                 const degenerateMorphSteps = Array(gs.numMorphSteps).fill(startPathData);
                 tweenShapeCombinations[startShape][endShape] = degenerateMorphSteps
             }
             else{
+                const tweenElementId = `${startShape}-${endShape}`
+                const tweenElementSelector = `#${tweenElementId}`
+                
+                ensureSvgElementExists(tweenElementId, startPathData, endPathData)
+                const tween = getTween(tweenElementSelector, startPathData, endPathData)
+                tween.start()
+                tween.pause()
+                tweens[startShape][endShape] = tween
+
                 const tweenMorphSteps = getMorphStepsFromTween(tween, gs.numMorphSteps, tweenElementId)
                 tweenShapeCombinations[startShape][endShape] = tweenMorphSteps
             }

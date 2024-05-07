@@ -74,16 +74,43 @@ document.addEventListener('keydown', function(event) {
             break;
         case 'c':
             // Increment the index, and wrap it if it exceeds the length of colorModes
-            if (!gs.transitionStartTime) {
-                // gs.nextColorModeIndex = (gs.colorModeIndex + 1) % gs.colorModes.length; // Prepare the next color mode index
-                gs.transitionStartTime = Date.now();
-                gs.nextColorModeIndex = (gs.colorModeIndex + 1) % gs.colorModes.length; // Prepare the next color mode index
+
+            // If current color mode is 'palette' then cycle palettes all the way through
+            if (gs.colorMethod == 'palette'){
+                if (!gs.transitionStartTime) {
+                    gs.transitionStartTime = Date.now();
+                    gs.nextPalette = (gs.currentPalette + 1) % Object.keys(palettes).length
+                }
+                else{  //Double tap p to cycle between palettes without transition
+                    gs.transitionStartTime = null;
+                    gs.currentPalette = gs.nextPalette
+                }
+
+                //If we just cycled through all the palettes, then get ready to cycle through color modes 
+                if (gs.nextPalette == 0){
+                    gs.nextColorModeIndex = (gs.colorModeIndex + 1) % gs.colorModes.length;
+                }
             }
-            else{ 
-                //If You are mid transition do a jump
-                gs.transitionStartTime = null;
-                gs.colorModeIndex = gs.nextColorModeIndex;
-                gs.colorMethod = gs.colorModes[gs.nextColorModeIndex];
+
+            console.log('gs.nextPalette', ':', gs.nextPalette );
+            
+            if (gs.nextPalette == 0){
+                if (!gs.transitionStartTime) {
+                    // gs.nextColorModeIndex = (gs.colorModeIndex + 1) % gs.colorModes.length; // Prepare the next color mode index
+                    gs.transitionStartTime = Date.now();
+                    gs.nextColorModeIndex = (gs.colorModeIndex + 1) % gs.colorModes.length; // Prepare the next color mode index
+                }
+                else{ 
+                    //If You are mid transition do a jump
+                    gs.transitionStartTime = null;
+                    gs.colorModeIndex = gs.nextColorModeIndex;
+                    gs.colorMethod = gs.colorModes[gs.nextColorModeIndex];
+
+                    //If you are quickly cycling through, it won't cycle the palette back around without this code
+                    if (gs.currentPalette == Object.keys(palettes).length-1) {
+                        gs.currentPalette = gs.nextPalette
+                    }
+                }
             }
 
             break;
@@ -92,16 +119,6 @@ document.addEventListener('keydown', function(event) {
             break;
         case 'k':
             gs.adjustingParameter = gs.adjustingParameter === "k" ? "none" : "k";
-            break;
-        case 'p':
-            if (!gs.transitionStartTime) {
-                gs.transitionStartTime = Date.now();
-                gs.nextPalette = (gs.currentPalette + 1) % Object.keys(palettes).length
-            }
-            else{  //Double tap p to cycle between palettes without transition
-                gs.transitionStartTime = null;
-                gs.currentPalette = gs.nextPalette
-            }
             break;
         case 'r':
             gs.adjustingParameter =gs.adjustingParameter === "r0" ? "none" : "r0";
