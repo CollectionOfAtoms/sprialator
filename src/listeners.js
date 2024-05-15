@@ -64,14 +64,6 @@ document.addEventListener('keydown', function(event) {
         case 'a':
             gs.autoAdjustParams = !gs.autoAdjustParams
             break;
-        case 'b':
-            gs.isBackgroundBlack = !gs.isBackgroundBlack;
-            if (gs.isBackgroundBlack) {
-                document.body.style.backgroundColor = 'black';
-            } else {
-                document.body.style.backgroundColor = 'white';
-            }
-            break;
         case 'c':
             // Increment the index, and wrap it if it exceeds the length of colorModes
 
