@@ -15,7 +15,7 @@ let gs={
     colorChange: 10,
     numSpirals: 9, // Default number of spirals
     isBackgroundBlack: true, // default to black
-    currentShapeIndex: 2, // index of shape type to default
+    currentShapeIndex: 0, // index of shape type to default
     
     shapes : ["circle", "square", "triangle", "star", "rhombus", "heart", "flower", "flower2", "soak", "bm", "earth", "eye", "tortise", "rabbit", "snake", "mouse", "elephant", "dolphin", "jellyfish", "seahorse", "triceratops", "random"],
     shape2Path: {
@@ -43,7 +43,7 @@ let gs={
         'mouse':"M 0.7762 -0.3124 C 0.6945 -0.2953 0.6226 -0.2369 0.5248 -0.1081 C 0.4598 -0.0223 0.4025 0.0378 0.3752 0.0357 C 0.354 -0.0797 0.2624 -0.1152 0.2052 -0.149 C 0.1294 -0.195 0.0455 -0.2173 -0.0442 -0.2178 C -0.1125 -0.2181 -0.1301 -0.2117 -0.1792 -0.1882 C -0.3532 -0.1161 -0.3245 -0.1704 -0.3171 -0.1979 C -0.3051 -0.2423 -0.3212 -0.2717 -0.3574 -0.2717 C -0.381 -0.2717 -0.4127 -0.2403 -0.4254 -0.2045 C -0.4412 -0.1753 -0.4397 -0.1662 -0.4675 -0.2161 C -0.4974 -0.2345 -0.5204 -0.2064 -0.5204 -0.1692 C -0.5204 -0.1465 -0.5242 -0.1413 -0.5468 -0.1337 C -0.5757 -0.1239 -0.675 -0.0335 -0.675 -0.0169 C -0.6613 0.0235 -0.6079 0.0598 -0.5148 0.0675 C -0.4666 0.0715 -0.4629 0.0735 -0.4003 0.1085 C -0.3092 0.1859 -0.4109 0.2102 -0.4471 0.2373 C -0.4672 0.2437 -0.4685 0.2572 -0.4492 0.2589 C -0.4212 0.2615 -0.4048 0.2574 -0.3592 0.2365 C -0.2743 0.1976 -0.2237 0.1814 -0.1861 0.1813 C -0.1121 0.1811 -0.0651 0.2199 -0.0922 0.2587 C -0.1483 0.3118 -0.0409 0.2872 -0.0385 0.2758 C -0.037 0.2684 -0.0201 0.2639 0.0126 0.262 C 0.0606 0.2593 0.1317 0.235 0.1424 0.2176 C 0.1493 0.2065 0.2337 0.206 0.2405 0.217 C 0.1893 0.2427 0.1798 0.2601 0.2116 0.2646 C 0.2526 0.2703 0.2923 0.251 0.3098 0.2166 C 0.3461 0.1844 0.3746 0.1344 0.3752 0.0842 C 0.4368 0.0755 0.496 0.013 0.5728 -0.0939 C 0.6768 -0.2386 0.7397 -0.282 0.8467 -0.2827 C 0.9792 -0.2922 1.0407 -0.1925 1.0535 -0.1697 C 1.0597 -0.1568 1.1193 -0.0471 1.124 -0.0471 C 1.0339 -0.2876 0.9474 -0.3362 0.7762 -0.3124 Z M 0.0268 0.1933 C 0.14 0.2041 -0.0258 0.2536 -0.0348 0.248 C -0.0387 0.2456 -0.0403 0.2129 -0.0403 0.1992 C -0.0403 0.1794 -0.0374 0.1752 -0.0261 0.1784 Z"
     },
         
-
+    globalRotation: 0, //Rotation angle applied to every shape 
     extraRotation: {
         'circle': 0,
         'square': 45,
@@ -57,7 +57,7 @@ let gs={
         'flower':90,
         'flower2':90,
         'dolphin':135,
-        'jellyfish':50,
+        'jellyfish':180,
         'earth':90,
         // 'among_us': 90,
         'eye': 90,
@@ -79,7 +79,7 @@ let gs={
     phase: 0,
 
     colorModes: ["default", "offsetAngle", "offsetAndRadius", "radiusBased", "hueSliceByOffsetAndRadius", "grayscale_hsl", "constantHue", "palette"],
-    colorModeIndex: 7, // global variable to track the current color mode
+    colorModeIndex: 0, // global variable to track the current color mode
 
     baseHue: 200,  //Hue for hueSlice color modes
     hueRange: 50,  //Width of hue slice 

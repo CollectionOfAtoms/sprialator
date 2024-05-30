@@ -244,11 +244,11 @@ function drawShape(shapeName, x, y, scale, color, dotIndex) {
     if (shapeName == 'random'){
         // Draw the shape associated with the current dot
         pathData = gs.shape2Path[gs.dotShapeMemory[dotKey].shape]; 
-        rotationAngle = angleToCenter + gs.extraRotation[gs.dotShapeMemory[dotKey].shape]
+        rotationAngle = angleToCenter + gs.extraRotation[gs.dotShapeMemory[dotKey].shape] + gs.globalRotation
     }
     else{
         pathData = gs.shape2Path[shapeName];
-        rotationAngle = angleToCenter + gs.extraRotation[shapeName]
+        rotationAngle = angleToCenter + gs.extraRotation[shapeName] + gs.globalRotation
     }
 
     svg.append("path")
@@ -345,9 +345,9 @@ function drawDotForSpiral(radius, spiralNumber, dotIndex) {
         //And at the same angle as the current shape is defined when they end
         let shapeRotation = 0
 
-        const startAngle = gs.extraRotation[startShape]
-        const endAngle = gs.extraRotation[endShape]
-        shapeRotation = startAngle + (endAngle-startAngle)*(currentMorphState/gs.numMorphSteps)
+        const startAngle = gs.extraRotation[startShape] 
+        const endAngle = gs.extraRotation[endShape] 
+        shapeRotation = startAngle + (endAngle-startAngle)*(currentMorphState/gs.numMorphSteps) + gs.globalRotation
 
         drawShapeFromPath(pathData, x, y, dynamicDotSize, colorString, shapeRotation);
     } else {

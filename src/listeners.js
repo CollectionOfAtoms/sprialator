@@ -40,9 +40,9 @@ document.addEventListener('keydown', function(event) {
                 gs.baseHue += 5;
                 gs.baseHue = baseHue % 360
             }else if (event.shiftKey) {
-                gs.maxDotSize += 1;
+                gs.maxDotSize += 10;
             } else {
-                gs.minDotSize += 1;
+                gs.minDotSize += 10;
             }
             break;
         case 'arrowdown':
@@ -54,10 +54,10 @@ document.addEventListener('keydown', function(event) {
                 gs.baseHue -= 5;
                 gs.baseHue = gs.baseHue % 360
             }else if (event.shiftKey) {
-                gs.maxDotSize -= 1;
+                gs.maxDotSize -= 10;
                 if (gs.maxDotSize < 1) {gs.maxDotSize=1} 
             } else {
-                gs.minDotSize -= 1;
+                gs.minDotSize -= 10;
                 if (gs.minDotSize < 1) {gs.minDotSize=1} 
             }
             break;
@@ -125,6 +125,11 @@ document.addEventListener('keydown', function(event) {
                 gs.dotShapeMemory[dotIndex].morphState = 0;
             }
             break;
+        case 'n':
+            gs.numSpirals = ((gs.numSpirals+1) % 9) + 1
+        case 'x':
+            gs.globalRotation = (gs.globalRotation+2)%360
+        
         default:
             const numKey = key;
             if (numKey >= '1' && numKey <= '9') {
