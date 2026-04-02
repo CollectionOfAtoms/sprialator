@@ -445,14 +445,21 @@ function displayControls() {
         `currentPalette: ${Object.keys(palettes)[gs.currentPalette]}`
     ];
 
-    // Draw translucent background behind both columns before any text
-    const bgHeight = Math.max(controls.length, readout.length) * lineHeight + padding * 2;
-    ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
-    ctx.fillRect(0, 0, textCanvas.width, bgHeight);
-
     ctx.font = `${fontSize}px Arial`;
     ctx.strokeStyle = "black";
     ctx.lineWidth = 2;
+
+    // Measure column widths to fit backgrounds snugly
+    const leftColWidth = Math.max(...readout.map(s => ctx.measureText(s).width));
+    const rightColWidth = Math.max(...controls.map(s => ctx.measureText(s).width));
+
+    // Left background (readout)
+    ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
+    ctx.fillRect(0, 0, leftColWidth + padding * 2, readout.length * lineHeight + padding * 2);
+
+    // Right background (controls)
+    const rightBgWidth = rightColWidth + padding * 2;
+    ctx.fillRect(textCanvas.width - rightBgWidth, 0, rightBgWidth, controls.length * lineHeight + padding * 2);
 
     ctx.textAlign = "right";
     for (let i = 0; i < controls.length; i++) {
