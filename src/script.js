@@ -453,13 +453,19 @@ function displayControls() {
     const leftColWidth = Math.max(...readout.map(s => ctx.measureText(s).width));
     const rightColWidth = Math.max(...controls.map(s => ctx.measureText(s).width));
 
+    const radius = 12;
+    ctx.fillStyle = "rgba(0, 0, 0, 0.22)";
+
     // Left background (readout)
-    ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
-    ctx.fillRect(0, 0, leftColWidth + padding * 2, readout.length * lineHeight + padding * 2);
+    ctx.beginPath();
+    ctx.roundRect(0, 0, leftColWidth + padding * 2, readout.length * lineHeight + padding * 2, [0, radius, radius, 0]);
+    ctx.fill();
 
     // Right background (controls)
     const rightBgWidth = rightColWidth + padding * 2;
-    ctx.fillRect(textCanvas.width - rightBgWidth, 0, rightBgWidth, controls.length * lineHeight + padding * 2);
+    ctx.beginPath();
+    ctx.roundRect(textCanvas.width - rightBgWidth, 0, rightBgWidth, controls.length * lineHeight + padding * 2, [radius, 0, 0, radius]);
+    ctx.fill();
 
     ctx.textAlign = "right";
     for (let i = 0; i < controls.length; i++) {
