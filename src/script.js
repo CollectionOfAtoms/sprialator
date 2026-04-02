@@ -417,19 +417,6 @@ function displayControls() {
     const lineHeight = fontSize + 4;
     const startX = textCanvas.width - padding;
 
-    ctx.font = `${fontSize}px Arial`;
-    ctx.strokeStyle = "black";
-    ctx.lineWidth = 2;
-    ctx.textAlign = "right";
-
-    for (let i = 0; i < controls.length; i++) {
-        ctx.strokeText(controls[i], startX, padding + lineHeight * i);
-        ctx.fillStyle = "white";
-        ctx.fillText(controls[i], startX, padding + lineHeight * i);
-    }
-
-    ctx.textAlign = "left";
-
     const readout = [
         `FPS: ${fps.toFixed(1)}`,
         `Adjusting: ${gs.adjustingParameter}`,
@@ -458,12 +445,27 @@ function displayControls() {
         `currentPalette: ${Object.keys(palettes)[gs.currentPalette]}`
     ];
 
-    const readoutStartX = padding;
+    // Draw translucent background behind both columns before any text
+    const bgHeight = Math.max(controls.length, readout.length) * lineHeight + padding * 2;
+    ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+    ctx.fillRect(0, 0, textCanvas.width, bgHeight);
+
+    ctx.font = `${fontSize}px Arial`;
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 2;
+
+    ctx.textAlign = "right";
+    for (let i = 0; i < controls.length; i++) {
+        ctx.strokeText(controls[i], startX, padding + lineHeight * i);
+        ctx.fillStyle = "white";
+        ctx.fillText(controls[i], startX, padding + lineHeight * i);
+    }
+
     ctx.textAlign = "left";
     for (let i = 0; i < readout.length; i++) {
-        ctx.strokeText(readout[i], readoutStartX, padding + lineHeight * i);
+        ctx.strokeText(readout[i], padding, padding + lineHeight * i);
         ctx.fillStyle = "white";
-        ctx.fillText(readout[i], readoutStartX, padding + lineHeight * i);
+        ctx.fillText(readout[i], padding, padding + lineHeight * i);
     }
 }
 
