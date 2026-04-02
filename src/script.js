@@ -350,6 +350,10 @@ function animate(now = performance.now()) {
     gs.phase += 0.001;
     gs.time += 0.0078125;
 
+    // Smoothly lerp dot sizes toward their targets
+    gs.minDotSize += (gs.targetMinDotSize - gs.minDotSize) * 0.08;
+    gs.maxDotSize += (gs.targetMaxDotSize - gs.maxDotSize) * 0.08;
+
     if( gs.doDisplayControls ) {
         displayControls()
     }

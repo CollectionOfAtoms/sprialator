@@ -40,9 +40,9 @@ document.addEventListener('keydown', function(event) {
                 gs.baseHue += 5;
                 gs.baseHue = gs.baseHue % 360
             }else if (event.shiftKey) {
-                gs.maxDotSize += 10;
+                gs.targetMaxDotSize += 10;
             } else {
-                gs.minDotSize += 10;
+                gs.targetMinDotSize += 10;
             }
             break;
         case 'arrowdown':
@@ -54,11 +54,9 @@ document.addEventListener('keydown', function(event) {
                 gs.baseHue -= 5;
                 gs.baseHue = gs.baseHue % 360
             }else if (event.shiftKey) {
-                gs.maxDotSize -= 10;
-                if (gs.maxDotSize < 1) {gs.maxDotSize=1} 
+                gs.targetMaxDotSize = Math.max(1, gs.targetMaxDotSize - 10);
             } else {
-                gs.minDotSize -= 10;
-                if (gs.minDotSize < 1) {gs.minDotSize=1} 
+                gs.targetMinDotSize = Math.max(1, gs.targetMinDotSize - 10);
             }
             break;
         case 'a':

@@ -76,6 +76,8 @@ let gs={
     oscillationRange: 100,
     minDotSize: 50,
     maxDotSize: 66,
+    targetMinDotSize: 50,
+    targetMaxDotSize: 66,
     phase: 0,
 
     colorModes: ["default", "offsetAngle", "offsetAndRadius", "radiusBased", "hueSliceByOffsetAndRadius", "grayscale_hsl", "constantHue", "palette"],
