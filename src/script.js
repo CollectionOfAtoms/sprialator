@@ -350,6 +350,10 @@ function animate(now = performance.now()) {
     gs.phase += 0.001;
     gs.time += 0.0078125;
 
+    // Smoothly lerp dot sizes toward their targets
+    gs.minDotSize += (gs.targetMinDotSize - gs.minDotSize) * 0.08;
+    gs.maxDotSize += (gs.targetMaxDotSize - gs.maxDotSize) * 0.08;
+
     if( gs.doDisplayControls ) {
         displayControls()
     }
@@ -413,19 +417,6 @@ function displayControls() {
     const lineHeight = fontSize + 4;
     const startX = textCanvas.width - padding;
 
-    ctx.font = `${fontSize}px Arial`;
-    ctx.strokeStyle = "black";
-    ctx.lineWidth = 2;
-    ctx.textAlign = "right";
-
-    for (let i = 0; i < controls.length; i++) {
-        ctx.strokeText(controls[i], startX, padding + lineHeight * i);
-        ctx.fillStyle = "white";
-        ctx.fillText(controls[i], startX, padding + lineHeight * i);
-    }
-
-    ctx.textAlign = "left";
-
     const readout = [
         `FPS: ${fps.toFixed(1)}`,
         `Adjusting: ${gs.adjustingParameter}`,
@@ -454,12 +445,40 @@ function displayControls() {
         `currentPalette: ${Object.keys(palettes)[gs.currentPalette]}`
     ];
 
-    const readoutStartX = padding;
+    ctx.font = `${fontSize}px Arial`;
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 2;
+
+    // Measure column widths to fit backgrounds snugly
+    const leftColWidth = Math.max(...readout.map(s => ctx.measureText(s).width));
+    const rightColWidth = Math.max(...controls.map(s => ctx.measureText(s).width));
+
+    const radius = 12;
+    ctx.fillStyle = "rgba(0, 0, 0, 0.22)";
+
+    // Left background (readout)
+    ctx.beginPath();
+    ctx.roundRect(0, 0, leftColWidth + padding * 2, readout.length * lineHeight + padding * 2, [0, radius, radius, 0]);
+    ctx.fill();
+
+    // Right background (controls)
+    const rightBgWidth = rightColWidth + padding * 2;
+    ctx.beginPath();
+    ctx.roundRect(textCanvas.width - rightBgWidth, 0, rightBgWidth, controls.length * lineHeight + padding * 2, [radius, 0, 0, radius]);
+    ctx.fill();
+
+    ctx.textAlign = "right";
+    for (let i = 0; i < controls.length; i++) {
+        ctx.strokeText(controls[i], startX, padding + lineHeight * i);
+        ctx.fillStyle = "white";
+        ctx.fillText(controls[i], startX, padding + lineHeight * i);
+    }
+
     ctx.textAlign = "left";
     for (let i = 0; i < readout.length; i++) {
-        ctx.strokeText(readout[i], readoutStartX, padding + lineHeight * i);
+        ctx.strokeText(readout[i], padding, padding + lineHeight * i);
         ctx.fillStyle = "white";
-        ctx.fillText(readout[i], readoutStartX, padding + lineHeight * i);
+        ctx.fillText(readout[i], padding, padding + lineHeight * i);
     }
 }
 
