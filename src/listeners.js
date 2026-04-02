@@ -38,7 +38,7 @@ document.addEventListener('keydown', function(event) {
                 gs.k += 0.001;
             }else if (gs.adjustingParameter === "h"){
                 gs.baseHue += 5;
-                gs.baseHue = baseHue % 360
+                gs.baseHue = gs.baseHue % 360
             }else if (event.shiftKey) {
                 gs.maxDotSize += 10;
             } else {
@@ -127,9 +127,11 @@ document.addEventListener('keydown', function(event) {
             break;
         case 'n':
             gs.numSpirals = ((gs.numSpirals+1) % 9) + 1
+            break;
         case 'x':
             gs.globalRotation = (gs.globalRotation+2)%360
-        
+            break;
+
         default:
             const numKey = key;
             if (numKey >= '1' && numKey <= '9') {
@@ -141,16 +143,15 @@ document.addEventListener('keydown', function(event) {
 })
 
 window.addEventListener('resize', function() {
-    // Update canvas size
-    const canvas = document.getElementById('textCanvas');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-  
-    // Update center point
-    gs.centerX = canvas.width / 2;
-    gs.centerY = canvas.height / 2;
-    gs.maxRadius = Math.sqrt(gs.centerX ** 2 + gs.centerY ** 2 );
-  
-    // You might want to call a function to redraw your canvas here
-    // redraw(); // Assuming you have a function called redraw that handles drawing
-  });  
+    const textCanvas = document.getElementById('textCanvas');
+    textCanvas.width = window.innerWidth;
+    textCanvas.height = window.innerHeight;
+
+    const mainCanvas = document.getElementById('mainCanvas');
+    mainCanvas.width = window.innerWidth;
+    mainCanvas.height = window.innerHeight;
+
+    gs.centerX = window.innerWidth / 2;
+    gs.centerY = window.innerHeight / 2;
+    gs.maxRadius = Math.sqrt(gs.centerX ** 2 + gs.centerY ** 2);
+});
