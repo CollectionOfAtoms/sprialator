@@ -353,6 +353,7 @@ function animate(now = performance.now()) {
     // Smoothly lerp dot sizes toward their targets
     gs.minDotSize += (gs.targetMinDotSize - gs.minDotSize) * 0.08;
     gs.maxDotSize += (gs.targetMaxDotSize - gs.maxDotSize) * 0.08;
+    gs.globalRotation += (gs.targetGlobalRotation - gs.globalRotation) * 0.08;
 
     if( gs.doDisplayControls ) {
         displayControls()
@@ -390,96 +391,276 @@ function animate(now = performance.now()) {
 }
 
 function displayControls() {
-    const controls = [
-        "ArrowRight: Increase color frequency / hueRange",
-        "ArrowLeft: Decrease color frequency / hueRange",
-        "ArrowUp: Adjust parameter up",
-        "ArrowDown: Adjust parameter down",
-        "R/r: Toggle r0",
-        "K/k: Toggle k",
-        "H/h: Toggle hue control",
-        "When one of these is toggled arrow functions adjust that parameter",
-        "Shift + ArrowUp: Increase max dot size",
-        "Shift + ArrowDown: Decrease max dot size",
-        "+: Increase rotation speed",
-        "-: Decrease rotation speed",
-        "1-9: Set number of spirals",
-        "N/n: Cycle number of spirals",
-        "X/x: Rotate global angle",
-        "C/c: Change colorMethod",
-        "S/s: Change shape",
-        "A/a: Toggle auto-adjust",
-        "Spacebar to toggle this display",
-    ];
+    ctx.save();
 
     const fontSize = 15;
+    const labelFontSize = Math.round(fontSize * 1.5); // 22px — 50% larger
+    const labelFont = `900 ${labelFontSize}px Impact, "Arial Black", sans-serif`;
+    const labelColor = 'hsl(48, 65%, 68%)'; // desaturated amber/gold
     const padding = 20;
-    const lineHeight = fontSize + 4;
-    const startX = textCanvas.width - padding;
+    const lineHeight = fontSize + 6;        // 21px
+    const labelSpacing = labelFontSize + 14; // vertical room for label + gap
+    const keyFontSize = 12;
+    const keyHeight = keyFontSize + 6;       // 18px
+    const keyPadH = 5;
+    const keyGap = 3;
+    const descKeyGap = 8;
+    const bgRadius = 12;
 
-    const readout = [
-        `FPS: ${fps.toFixed(1)}`,
-        `Adjusting: ${gs.adjustingParameter}`,
-        `autoAdjustParams: ${gs.autoAdjustParams}`,
-        `rotation: ${gs.rotation.toFixed(2)}`,
-        `rotationSpeed: ${gs.rotationSpeed.toFixed(5)}`,
-        `colorChange: ${gs.colorChange}`,
-        `numSpirals: ${gs.numSpirals}`,
-        `isBackgroundBlack: ${gs.isBackgroundBlack}`,
-        `currentShapeIndex: ${gs.currentShapeIndex}`,
-        `currentShape: ${gs.currentShape}`,
-        `time: ${gs.time.toFixed(2)}`,
-        `frequency: ${gs.frequency.toFixed(2)}`,
-        `oscillationRange: ${gs.oscillationRange}`,
-        `minDotSize: ${gs.minDotSize.toFixed(2)}`,
-        `maxDotSize: ${gs.maxDotSize.toFixed(2)}`,
-        `phase: ${gs.phase.toFixed(2)}`,
-        `angleIncrement: ${gs.angleIncrement.toFixed(2)}`,
-        `radiusIncrement: ${gs.radiusIncrement.toFixed(2)}`,
-        `r0: ${gs.r0.toFixed(2)}`,
-        `k: ${gs.k.toFixed(2)}`,
-        `baseHue: ${gs.baseHue.toFixed(2)}`,
-        `hueRange: ${gs.hueRange}`,
-        `colorModeIndex: ${gs.colorModeIndex}`,
-        `colorMethod: ${gs.colorMethod}`,
-        `currentPalette: ${Object.keys(palettes)[gs.currentPalette]}`
+    const adj = gs.adjustingParameter;
+    const shift = gs.shiftHeld;
+
+    // ── Key icon helpers ──────────────────────────────────────────────────────
+
+    const getKeyWidth = (label) => {
+        ctx.font = `bold ${keyFontSize}px monospace`;
+        return Math.max(keyHeight, ctx.measureText(label).width + keyPadH * 2);
+    };
+
+    const getKeysGroupWidth = (keys) => {
+        let total = 0;
+        for (let i = 0; i < keys.length; i++) {
+            total += getKeyWidth(keys[i]);
+            if (i < keys.length - 1) total += keyGap;
+        }
+        return total;
+    };
+
+    // Draw one key icon; returns its pixel width
+    const drawKey = (label, x, y, state) => {
+        const kw = getKeyWidth(label);
+        const kh = keyHeight;
+        const isActive = state === 'active';
+        const isMuted  = state === 'muted';
+
+        ctx.globalAlpha = isMuted ? 0.30 : 1.0;
+
+        if (isActive) {
+            ctx.shadowColor = 'rgba(255, 225, 60, 0.9)';
+            ctx.shadowBlur  = 13;
+        } else {
+            ctx.shadowBlur = 0;
+        }
+
+        // Background
+        ctx.fillStyle = isMuted  ? 'rgba(60, 60, 60, 0.55)'
+                      : isActive ? 'rgba(255, 210, 30, 0.22)'
+                                 : 'rgba(200, 200, 200, 0.12)';
+        ctx.beginPath();
+        ctx.roundRect(x, y, kw, kh, 3);
+        ctx.fill();
+
+        // Border (no glow on border)
+        ctx.shadowBlur = 0;
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = isMuted  ? 'rgba(80, 80, 80, 0.4)'
+                        : isActive ? 'rgba(255, 210, 30, 0.8)'
+                                   : 'rgba(170, 170, 170, 0.4)';
+        ctx.stroke();
+
+        // Label
+        ctx.font = `bold ${keyFontSize}px monospace`;
+        ctx.textAlign    = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = isMuted  ? 'rgba(100, 100, 100, 1)'
+                      : isActive ? 'rgba(255, 230, 80, 1)'
+                                 : 'rgba(230, 230, 230, 1)';
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.9)';
+        ctx.lineWidth = 1.5;
+        ctx.strokeText(label, x + kw / 2, y + kh / 2);
+        ctx.fillText(label, x + kw / 2, y + kh / 2);
+
+        ctx.globalAlpha = 1.0;
+        return kw;
+    };
+
+    // ── Control items ─────────────────────────────────────────────────────────
+
+    const paramName = adj === 'r0' ? 'r0' : adj === 'k' ? 'k' : adj === 'h' ? 'hue' : '';
+    const arrowDesc = adj !== 'none' ? `Adjust ${paramName}` : 'Min dot size';
+    const lrDesc    = adj === 'h' ? 'Hue range' : 'Color freq';
+
+    const ctrls = [
+        { keys: ['↑'],       desc: arrowDesc + ' +',  state: adj !== 'none' ? 'active' : (shift ? 'muted'  : 'normal') },
+        { keys: ['↓'],       desc: arrowDesc + ' −',  state: adj !== 'none' ? 'active' : (shift ? 'muted'  : 'normal') },
+        { keys: ['⇧', '↑'], desc: 'Max dot +',       state: adj !== 'none' ? 'muted'  : (shift ? 'active' : 'normal') },
+        { keys: ['⇧', '↓'], desc: 'Max dot −',       state: adj !== 'none' ? 'muted'  : (shift ? 'active' : 'normal') },
+        { keys: ['→'],       desc: lrDesc + ' +',     state: 'normal' },
+        { keys: ['←'],       desc: lrDesc + ' −',     state: 'normal' },
+        { keys: ['R'],       desc: 'Toggle r0 mode',  state: adj === 'r0' ? 'active' : (adj !== 'none' ? 'muted' : 'normal') },
+        { keys: ['K'],       desc: 'Toggle k mode',   state: adj === 'k'  ? 'active' : (adj !== 'none' ? 'muted' : 'normal') },
+        { keys: ['H'],       desc: 'Toggle hue mode', state: adj === 'h'  ? 'active' : (adj !== 'none' ? 'muted' : 'normal') },
+        { keys: ['+'],       desc: 'Rotation +',      state: 'normal' },
+        { keys: ['−'],       desc: 'Rotation −',      state: 'normal' },
+        { keys: ['1-9'],     desc: 'Set spirals',     state: 'normal' },
+        { keys: ['N'],       desc: 'Cycle spirals',   state: 'normal' },
+        { keys: ['X'],       desc: 'Rotate angle',    state: 'normal' },
+        { keys: ['C'],       desc: 'Color mode',      state: 'normal' },
+        { keys: ['S'],       desc: 'Shape',           state: 'normal' },
+        { keys: ['A'],       desc: 'Auto-adjust',     state: gs.autoAdjustParams ? 'active' : 'normal' },
+        { keys: ['SPC'],     desc: 'Toggle display',  state: 'normal' },
     ];
 
+    // ── Readout items ─────────────────────────────────────────────────────────
+
+    const readout = [
+        { text: `FPS: ${fps.toFixed(1)}`,                                      hl: false },
+        { text: `Adjusting: ${gs.adjustingParameter}`,                         hl: adj !== 'none' },
+        { text: `autoAdjust: ${gs.autoAdjustParams}`,                          hl: gs.autoAdjustParams },
+        { text: `rotation: ${gs.rotation.toFixed(2)}`,                         hl: false },
+        { text: `rotationSpeed: ${gs.rotationSpeed.toFixed(5)}`,               hl: false },
+        { text: `colorChange: ${gs.colorChange}`,                              hl: false },
+        { text: `numSpirals: ${gs.numSpirals}`,                                hl: false },
+        { text: `isBackgroundBlack: ${gs.isBackgroundBlack}`,                  hl: false },
+        { text: `currentShapeIndex: ${gs.currentShapeIndex}`,                  hl: false },
+        { text: `currentShape: ${gs.currentShape}`,                            hl: false },
+        { text: `time: ${gs.time.toFixed(2)}`,                                 hl: false },
+        { text: `frequency: ${gs.frequency.toFixed(2)}`,                       hl: false },
+        { text: `oscillationRange: ${gs.oscillationRange}`,                    hl: false },
+        { text: `minDotSize: ${gs.minDotSize.toFixed(2)}`,                     hl: adj === 'none' && !shift },
+        { text: `maxDotSize: ${gs.maxDotSize.toFixed(2)}`,                     hl: adj === 'none' && shift },
+        { text: `phase: ${gs.phase.toFixed(2)}`,                               hl: false },
+        { text: `angleIncrement: ${gs.angleIncrement.toFixed(2)}`,             hl: false },
+        { text: `radiusIncrement: ${gs.radiusIncrement.toFixed(2)}`,           hl: false },
+        { text: `r0: ${gs.r0.toFixed(2)}`,                                     hl: adj === 'r0' },
+        { text: `k: ${gs.k.toFixed(2)}`,                                       hl: adj === 'k' },
+        { text: `baseHue: ${gs.baseHue.toFixed(2)}`,                           hl: adj === 'h' },
+        { text: `hueRange: ${gs.hueRange}`,                                    hl: adj === 'h' },
+        { text: `colorModeIndex: ${gs.colorModeIndex}`,                        hl: false },
+        { text: `colorMethod: ${gs.colorMethod}`,                              hl: false },
+        { text: `currentPalette: ${Object.keys(palettes)[gs.currentPalette]}`, hl: false },
+    ];
+
+    // ── Measure widths for panel backgrounds ──────────────────────────────────
+
     ctx.font = `${fontSize}px Arial`;
-    ctx.strokeStyle = "black";
-    ctx.lineWidth = 2;
+    const leftContentW = Math.max(...readout.map(r => ctx.measureText(r.text).width));
+    ctx.font = labelFont;
+    const leftLabelW = ctx.measureText('Current Params').width;
+    const leftColWidth = Math.max(leftContentW, leftLabelW);
 
-    // Measure column widths to fit backgrounds snugly
-    const leftColWidth = Math.max(...readout.map(s => ctx.measureText(s).width));
-    const rightColWidth = Math.max(...controls.map(s => ctx.measureText(s).width));
-
-    const radius = 12;
-    ctx.fillStyle = "rgba(0, 0, 0, 0.22)";
-
-    // Left background (readout)
-    ctx.beginPath();
-    ctx.roundRect(0, 0, leftColWidth + padding * 2, readout.length * lineHeight + padding * 2, [0, radius, radius, 0]);
-    ctx.fill();
-
-    // Right background (controls)
-    const rightBgWidth = rightColWidth + padding * 2;
-    ctx.beginPath();
-    ctx.roundRect(textCanvas.width - rightBgWidth, 0, rightBgWidth, controls.length * lineHeight + padding * 2, [radius, 0, 0, radius]);
-    ctx.fill();
-
-    ctx.textAlign = "right";
-    for (let i = 0; i < controls.length; i++) {
-        ctx.strokeText(controls[i], startX, padding + lineHeight * i);
-        ctx.fillStyle = "white";
-        ctx.fillText(controls[i], startX, padding + lineHeight * i);
+    ctx.font = `${fontSize}px Arial`;
+    let maxRowW = 0;
+    for (const item of ctrls) {
+        const dw = ctx.measureText(item.desc).width;
+        const kw = getKeysGroupWidth(item.keys);
+        maxRowW = Math.max(maxRowW, dw + descKeyGap + kw);
     }
+    ctx.font = labelFont;
+    const rightLabelW = ctx.measureText('Controls').width;
+    const rightColWidth = Math.max(maxRowW, rightLabelW);
 
-    ctx.textAlign = "left";
+    // ── Panel backgrounds ─────────────────────────────────────────────────────
+
+    const leftPanelH  = padding + labelSpacing + readout.length * lineHeight + padding;
+    const rightPanelW = rightColWidth + padding * 2;
+    const rightPanelH = padding + labelSpacing + ctrls.length * lineHeight + padding;
+
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.22)';
+    ctx.shadowBlur = 0;
+
+    ctx.beginPath();
+    ctx.roundRect(0, 0, leftColWidth + padding * 2, leftPanelH, [0, bgRadius, bgRadius, 0]);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.roundRect(textCanvas.width - rightPanelW, 0, rightPanelW, rightPanelH, [bgRadius, 0, 0, bgRadius]);
+    ctx.fill();
+
+    // ── "Current Params" label ────────────────────────────────────────────────
+
+    ctx.font        = labelFont;
+    ctx.textAlign   = 'left';
+    ctx.textBaseline = 'top';
+    ctx.lineWidth   = 3;
+    ctx.strokeStyle = 'black';
+    ctx.fillStyle   = labelColor;
+    ctx.shadowBlur  = 0;
+    ctx.strokeText('Current Params', padding, padding);
+    ctx.fillText('Current Params', padding, padding);
+
+    // ── Readout rows ──────────────────────────────────────────────────────────
+
+    ctx.font         = `${fontSize}px Arial`;
+    ctx.lineWidth    = 2;
+    ctx.textAlign    = 'left';
+    ctx.textBaseline = 'top';
+
     for (let i = 0; i < readout.length; i++) {
-        ctx.strokeText(readout[i], padding, padding + lineHeight * i);
-        ctx.fillStyle = "white";
-        ctx.fillText(readout[i], padding, padding + lineHeight * i);
+        const item = readout[i];
+        const rowY = padding + labelSpacing + lineHeight * i;
+
+        if (item.hl) {
+            ctx.shadowColor = 'rgba(255, 225, 60, 0.85)';
+            ctx.shadowBlur  = 10;
+            ctx.fillStyle   = 'rgba(255, 235, 80, 1)';
+        } else {
+            ctx.shadowBlur = 0;
+            ctx.fillStyle  = 'white';
+        }
+        ctx.strokeStyle = 'black';
+        ctx.strokeText(item.text, padding, rowY);
+        ctx.fillText(item.text, padding, rowY);
     }
+    ctx.shadowBlur = 0;
+
+    // ── "Controls" label ──────────────────────────────────────────────────────
+
+    ctx.font         = labelFont;
+    ctx.textAlign    = 'right';
+    ctx.textBaseline = 'top';
+    ctx.lineWidth    = 3;
+    ctx.strokeStyle  = 'black';
+    ctx.fillStyle    = labelColor;
+    ctx.shadowBlur   = 0;
+    ctx.strokeText('Controls', textCanvas.width - padding, padding);
+    ctx.fillText('Controls', textCanvas.width - padding, padding);
+
+    // ── Control rows ──────────────────────────────────────────────────────────
+
+    for (let i = 0; i < ctrls.length; i++) {
+        const item = ctrls[i];
+        const rowY = padding + labelSpacing + lineHeight * i;
+        const keysW = getKeysGroupWidth(item.keys);
+        const rightEdge = textCanvas.width - padding;
+        let kx = rightEdge - keysW;
+
+        // Key icons
+        let cx = kx;
+        for (let ki = 0; ki < item.keys.length; ki++) {
+            const kw = drawKey(item.keys[ki], cx, rowY, item.state);
+            cx += kw;
+            if (ki < item.keys.length - 1) cx += keyGap;
+        }
+
+        // Description text
+        const descX = kx - descKeyGap;
+        ctx.font         = `${fontSize}px Arial`;
+        ctx.textAlign    = 'right';
+        ctx.textBaseline = 'middle';
+        const textY = rowY + keyHeight / 2;
+
+        if (item.state === 'muted') {
+            ctx.fillStyle   = 'rgba(100, 100, 100, 0.7)';
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.shadowBlur  = 0;
+        } else if (item.state === 'active') {
+            ctx.fillStyle   = 'rgba(255, 235, 80, 1)';
+            ctx.strokeStyle = 'black';
+            ctx.shadowColor = 'rgba(255, 225, 60, 0.6)';
+            ctx.shadowBlur  = 8;
+        } else {
+            ctx.fillStyle   = 'white';
+            ctx.strokeStyle = 'black';
+            ctx.shadowBlur  = 0;
+        }
+        ctx.lineWidth = 2;
+        ctx.strokeText(item.desc, descX, textY);
+        ctx.fillText(item.desc, descX, textY);
+        ctx.shadowBlur = 0;
+    }
+
+    ctx.restore();
 }
 
 

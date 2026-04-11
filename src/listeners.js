@@ -2,6 +2,7 @@ import { gs } from './state.js';
 import { palettes } from './palettes.js'
 
 document.addEventListener('keydown', function(event) {
+    if (event.key === 'Shift') gs.shiftHeld = true;
     const key = event.key.toLowerCase();
     
     console.log(key)
@@ -127,7 +128,7 @@ document.addEventListener('keydown', function(event) {
             gs.numSpirals = ((gs.numSpirals+1) % 9) + 1
             break;
         case 'x':
-            gs.globalRotation = (gs.globalRotation+2)%360
+            gs.targetGlobalRotation += 2;
             break;
 
         default:
@@ -139,6 +140,10 @@ document.addEventListener('keydown', function(event) {
             break;
     }
 })
+
+document.addEventListener('keyup', function(event) {
+    if (event.key === 'Shift') gs.shiftHeld = false;
+});
 
 window.addEventListener('resize', function() {
     const textCanvas = document.getElementById('textCanvas');
